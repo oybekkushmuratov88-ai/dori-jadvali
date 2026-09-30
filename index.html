@@ -504,12 +504,13 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
         <li><b>iPhone:</b> ushbu sahifani <b>Safari</b>’da oching → pastdagi “Ulashish” (□↑) tugmasi → “На экран «Домой»” / “Add to Home Screen” → “Добавить / Add”.</li>
         <li><b>Android:</b> <b>Chrome</b>’da oching → yuqoridagi ⋮ menyu → “Установить приложение” / “Install app” (yoki “Add to Home screen”).</li>
       </ol>
+      <p class="hint" id="apkHint">Android uchun ilova fayli ham bor: <a href="dori-jadvali.apk" download>dori-jadvali.apk</a>. Uni Telegram orqali boshqalarga yuborish mumkin.</p>
       <button class="btn primary" type="button" id="installBtn" hidden>Ilovani o‘rnatish</button>
       <p class="hint" id="installedNote" hidden>Ilova o‘rnatilgan va internetsiz ham ishlaydi.</p>
     </section>
 
     <p class="warn-box">Dori qabul qilishda shifokor ko‘rsatmasi va retseptdagi ko‘rsatmalar ustuvor.</p>
-    <p class="ver">Dori jadvali · versiya 2.1</p>
+    <p class="ver">Dori jadvali · versiya 2.2</p>
   </main>
 </div>
 
@@ -1123,7 +1124,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 
   // ================= Install =================
   var deferredPrompt = null;
-  function isStandalone(){ return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
+  function isStandalone(){ return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true || !!window.DoriAndroid; }
   function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
   function renderInstallTip(){
     var show = !isStandalone() && !tipClosed;
@@ -1245,6 +1246,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     var sa = isStandalone();
     $("installBtn").hidden = sa || !deferredPrompt;
     $("installedNote").hidden = !sa;
+    $("apkHint").hidden = sa || isIOS();
     $("backupHint").textContent = cloud.phase === "in"
       ? "Ma’lumotlaringiz hisobingizda saqlanadi. Xohlasangiz, qo‘shimcha nusxani faylga ham saqlab qo‘yishingiz mumkin."
       : "Hisobga kirmagan bo‘lsangiz, ma’lumotlar faqat shu telefonda saqlanadi. Telefonni almashtirishdan oldin zaxira faylni saqlab qo‘ying (masalan, “Fayllar” yoki Telegram’ga).";
@@ -1290,6 +1292,10 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 
   // Offer a generated file: the share sheet on phones ("Save to Files", Telegram…), a download elsewhere.
   function offerFile(name, mime, content){
+    // Inside the Android app the page hands the file to the phone's share sheet.
+    if (window.DoriAndroid && typeof window.DoriAndroid.shareFile === "function") {
+      try { window.DoriAndroid.shareFile(name, mime, utf8ToBase64(content)); return Promise.resolve(true); } catch (e) {}
+    }
     var blob = new Blob([content], {type: mime});
     var file = null;
     try { file = new File([blob], name, {type: mime}); } catch (e) {}
@@ -1300,6 +1306,11 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
       });
     }
     return Promise.resolve(downloadBlob(name, blob));
+  }
+  function utf8ToBase64(text){
+    var bytes = new TextEncoder().encode(text), bin = "";
+    for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
   }
   function downloadBlob(name, blob){
     var url = URL.createObjectURL(blob), a = document.createElement("a");

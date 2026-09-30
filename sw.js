@@ -1,6 +1,6 @@
 // Offline support: the app shell is cached on install. Pages are fetched
 // network-first (so updates arrive when online) and fall back to the cache.
-var CACHE = "dori-jadvali-v2.1.0";
+var CACHE = "dori-jadvali-v2.2.0";
 var SHELL = [
   "./",
   "./index.html",
@@ -44,6 +44,8 @@ self.addEventListener("fetch", function (event) {
   if (req.method !== "GET") return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // App files for download always come fresh from the network.
+  if (/\.(apk|mobileconfig)$/.test(url.pathname)) return;
 
   if (req.mode === "navigate") {
     event.respondWith(

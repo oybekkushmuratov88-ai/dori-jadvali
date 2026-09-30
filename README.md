@@ -35,6 +35,13 @@ Firestore tuzilmasi:
 `firebase-config.js` da `null` qolsa, ilova hisobsiz rejimda ishlaydi.
 Lokal sinov: Firebase emulyatorlari (auth 9099, firestore 8080) va `http://localhost:8765/?emu`.
 
+## Telefonga o'rnatish fayllari
+
+- `dori-jadvali.apk`: Android ilovasi (Android 7.0+). Ichida shu sayt ochiladi, kamera va fayl ulashish ishlaydi.
+  Yig'ish: `KEYSTORE=... KEYSTORE_PASS=... android/build.sh` (Android SDK kerak emas, vositalar Maven Central'dan olinadi).
+  Imzo kaliti repoga qo'yilmaydi. Yangilanishni o'rnatish uchun APK har doim o'sha kalit bilan imzolanishi kerak.
+- `dori-jadvali.mobileconfig`: iPhone uchun uy ekraniga "Dorilar" ikonkasini qo'shadigan profil (Web Clip).
+
 ## Fayllar
 
 - `index.html`: butun ilova (HTML, CSS, JS bitta faylda)
