@@ -1,10 +1,14 @@
 // Offline support: the app shell is cached on install. Pages are fetched
 // network-first (so updates arrive when online) and fall back to the cache.
-var CACHE = "dori-jadvali-v2.0.0";
+var CACHE = "dori-jadvali-v2.1.0";
 var SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./firebase-config.js",
+  "./vendor/firebase-app-compat.js",
+  "./vendor/firebase-auth-compat.js",
+  "./vendor/firebase-firestore-compat.js",
   "./fonts/golos-text-latin.woff2",
   "./fonts/unbounded-latin.woff2",
   "./icons/icon-192.png",
@@ -16,7 +20,10 @@ var SHELL = [
 
 self.addEventListener("install", function (event) {
   event.waitUntil(
-    caches.open(CACHE).then(function (cache) { return cache.addAll(SHELL); }).then(function () { return self.skipWaiting(); })
+    caches.open(CACHE).then(function (cache) {
+      // "reload" skips the browser's HTTP cache so a new version never precaches stale files.
+      return cache.addAll(SHELL.map(function (u) { return new Request(u, {cache: "reload"}); }));
+    }).then(function () { return self.skipWaiting(); })
   );
 });
 

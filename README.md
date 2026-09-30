@@ -9,16 +9,39 @@ iPhone (Safari) va Android (Chrome) brauzerida ochilib, "Uy ekraniga qo'shish" o
 - **Tarix**: belgilangan har bir qabul (qachon belgilangani bilan), dori va holat bo'yicha saralash, Excel (CSV) faylga saqlash.
 - **Dorilar**: dori qo'shish va tahrirlash (nomi, dozasi, rasmi, ichish vaqtlari, boshlanish/tugash sanasi).
   Tugash sanasi o'tgan dori jadvaldan o'zi chiqib, "Arxiv dorilar"ga o'tadi.
-- **Sozlamalar**: umumiy davolash muddati (boshlanish va tugash sanasi), zaxira nusxa saqlash va tiklash.
+- **Sozlamalar**: shaxsiy hisob (ro'yxatdan o'tish, kirish, parolni tiklash), umumiy davolash muddati, zaxira nusxa saqlash va tiklash.
 
-Ma'lumotlar faqat telefonning o'zida saqlanadi (localStorage, rasmlar IndexedDB'da).
-Boshlang'ich dorilar ro'yxati `Dori_qabul_qilish_28_kunlik_jadval.docx` retseptidan olingan.
+## Hisob va ma'lumotlar
+
+- Hisobsiz: ma'lumotlar faqat telefonda saqlanadi (localStorage, rasmlar IndexedDB'da).
+- Hisob bilan (email va parol, Firebase Authentication): dorilar, tarix va rasmlar Firestore'da saqlanadi va
+  istalgan telefonda shu hisobga kirilganda qaytadi. Internetsiz qo'yilgan belgilar internet ulanganda yuboriladi.
+  Hisobsiz kiritilgan ma'lumotlar birinchi kirishda (rozilik so'ralib) hisobga ko'chiriladi.
+- Har kim faqat o'z ma'lumotlarini o'qiy va yoza oladi (`firestore.rules`).
+
+Firestore tuzilmasi:
+
+- `users/{uid}`: `course`, `meds` (dorilar ro'yxati), `profile`
+- `users/{uid}/marks/{YYYY-MM}`: shu oydagi belgilar (`m` xaritasi, kalit `sana|doriId|vaqt`)
+- `users/{uid}/photos/{photoId}`: dori rasmi (`d`, JPEG data URL)
+
+## Firebase sozlash
+
+1. console.firebase.google.com → yangi loyiha.
+2. Authentication → Sign-in method → Email/Password → Enable.
+3. Firestore Database → Create database (production mode) → Rules: `firestore.rules` mazmunini joylab, Publish.
+4. Project settings → Your apps → Web app qo'shish → `firebaseConfig` qiymatlarini `firebase-config.js` ga yozish.
+
+`firebase-config.js` da `null` qolsa, ilova hisobsiz rejimda ishlaydi.
+Lokal sinov: Firebase emulyatorlari (auth 9099, firestore 8080) va `http://localhost:8765/?emu`.
 
 ## Fayllar
 
 - `index.html`: butun ilova (HTML, CSS, JS bitta faylda)
 - `sw.js`: internetsiz ishlash uchun service worker (yangilashda `CACHE` versiyasini oshiring)
 - `manifest.webmanifest`, `icons/`: o'rnatish uchun ikonka va sozlamalar
+- `firebase-config.js`, `firestore.rules`: hisob tizimi sozlamalari va ma'lumotlarga kirish qoidalari
+- `vendor/`: Firebase JS SDK 12.19.0 compat build'lari (Apache License 2.0)
 - `fonts/`: Golos Text va Unbounded shriftlari (SIL Open Font License 1.1)
 
 ## Joylash
