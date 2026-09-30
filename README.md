@@ -39,7 +39,7 @@ Lokal sinov: Firebase emulyatorlari (auth 9099, firestore 8080) va `http://local
 
 - `dori-jadvali.apk`: Android ilovasi (Android 7.0+). Ichida shu sayt ochiladi, kamera va fayl ulashish ishlaydi.
   Yig'ish: `KEYSTORE=... KEYSTORE_PASS=... android/build.sh` (Android SDK kerak emas, vositalar Maven Central'dan olinadi).
-  Imzo kaliti repoga qo'yilmaydi. Yangilanishni o'rnatish uchun APK har doim o'sha kalit bilan imzolanishi kerak.
+  Imzo: v1 + v2 (`android/tools/sign_apk.py`, Python `cryptography` paketi kerak). Imzo kaliti repoga qo'yilmaydi. Yangilanishni o'rnatish uchun APK har doim o'sha kalit bilan imzolanishi kerak.
 - `dori-jadvali.mobileconfig`: iPhone uchun uy ekraniga "Dorilar" ikonkasini qo'shadigan profil (Web Clip).
 
 ## Fayllar

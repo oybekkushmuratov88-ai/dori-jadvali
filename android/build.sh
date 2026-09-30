@@ -3,8 +3,9 @@
 #   aapt2 + framework resources  <- org.apktool:apktool-lib
 #   Android classes (compile)    <- org.robolectric:android-all
 #   .class -> .dex               <- com.jakewharton.android.repackaged:dalvik-dx
-#   signing (v2 scheme)          <- com.android.tools.build:apksig
+#   signing (v1 + v2)            <- tools/sign_apk.py; checked with com.android.tools.build:apksig
 #
+# Signing needs Python with the "cryptography" package (set PYTHON to pick the interpreter).
 # Signing key: KEYSTORE (PKCS12, alias "dori") and KEYSTORE_PASS. Keep the key safe and
 # never commit it: Android only installs an update when it is signed with the same key.
 set -euo pipefail
@@ -71,9 +72,10 @@ with zipfile.ZipFile(src) as zin, open(dst, "wb") as raw:
     zout.close()
 PY
 
-# 4. sign + verify
-javac -nowarn -d "$OUT/signer" -cp "$TOOLS/apksig.jar" "$HERE/tools/SignApk.java"
+# 4. sign (v1 + v2, tools/sign_apk.py) and verify with Google's apksig
+"${PYTHON:-python3}" "$HERE/tools/sign_apk.py" "$KEYSTORE" "$OUT/unsigned.apk" "$ROOT/dori-jadvali.apk"
+javac -nowarn -d "$OUT/verifier" -cp "$TOOLS/apksig.jar" "$HERE/tools/VerifyApk.java"
 java --add-exports java.base/sun.security.x509=ALL-UNNAMED --add-exports java.base/sun.security.pkcs=ALL-UNNAMED \
-  --add-exports java.base/sun.security.util=ALL-UNNAMED -cp "$OUT/signer:$TOOLS/apksig.jar" SignApk "$KEYSTORE" dori "$KEYSTORE_PASS" "$OUT/unsigned.apk" "$ROOT/dori-jadvali.apk"
+  --add-exports java.base/sun.security.util=ALL-UNNAMED -cp "$OUT/verifier:$TOOLS/apksig.jar" VerifyApk "$ROOT/dori-jadvali.apk"
 "$TOOLS/aapt2" dump badging "$ROOT/dori-jadvali.apk" | head -3
 ls -la "$ROOT/dori-jadvali.apk"
