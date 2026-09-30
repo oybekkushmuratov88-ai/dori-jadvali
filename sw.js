@@ -1,6 +1,6 @@
 // Offline support: the app shell is cached on install. Pages are fetched
 // network-first (so updates arrive when online) and fall back to the cache.
-var CACHE = "dori-jadvali-v2.2.0";
+var CACHE = "dori-jadvali-v2.3.0";
 var SHELL = [
   "./",
   "./index.html",

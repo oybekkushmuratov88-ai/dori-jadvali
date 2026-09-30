@@ -117,18 +117,11 @@ button.thumb{cursor:zoom-in;border:1px solid var(--line)}
 
 /* Today: day */
 .day{display:flex;flex-direction:column;gap:12px}
-.daynav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;padding-block:8px;background:var(--bg)}
-.nav{width:48px;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
-.nav:disabled{opacity:.35;cursor:default}
-.nav svg{width:22px;height:22px}
-.daytitle{text-align:center;min-width:0}
-.daytitle h2{font-family:var(--f-display);font-weight:700;font-size:1.25rem;line-height:1.2}
-.daytitle p{color:var(--muted);font-size:.93rem}
-.daybar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;font-size:.95rem}
-.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:.8rem;font-weight:600;background:var(--sunk);color:var(--muted)}
-.chip.today{background:var(--accent);color:var(--on-accent)}
-.daycount{font-weight:600;font-variant-numeric:tabular-nums}
-.daybar .link{margin-left:auto}
+.dayhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.dayhead h2{font-family:var(--f-display);font-weight:700;font-size:1.3rem;line-height:1.2}
+.dayhead p{color:var(--muted);font-size:.93rem}
+.daycount{font-weight:600;font-variant-numeric:tabular-nums;font-size:.95rem}
+.btn.small{min-height:38px;padding:0 12px;font-size:.88rem}
 
 .doses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
 .dose{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 10px 12px 14px;display:flex;flex-direction:column;gap:12px;transition:background-color .2s ease,border-color .2s ease}
@@ -156,7 +149,19 @@ button.thumb{cursor:zoom-in;border:1px solid var(--line)}
 .act.no[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:var(--on-bad)}
 .act:disabled{cursor:not-allowed;color:var(--muted);opacity:.55}
 .act:active:not(:disabled){transform:scale(.98)}
-.daynote{font-size:.9rem;color:var(--muted);background:var(--sunk);border-radius:12px;padding:10px 12px}
+.daynote{display:flex;flex-direction:column;gap:8px;font-size:.9rem;color:var(--muted);background:var(--sunk);border-radius:12px;padding:10px 12px}
+.notice-btn{display:block;width:100%;text-align:left;border:0;background:var(--late-soft);color:var(--late);border-radius:10px;padding:9px 11px;font-weight:600;font-size:.9rem;cursor:pointer}
+.dose.is-leaving{opacity:0;transform:translateX(48px);transition:opacity .26s ease,transform .26s ease}
+.done-card{display:flex;gap:12px;align-items:flex-start;background:var(--ok-soft);border:1px solid var(--ok-line);border-radius:var(--r);padding:14px}
+.done-card svg{flex:none;width:26px;height:26px;color:var(--ok)}
+.done-card b{display:block;font-size:1.02rem}
+.done-card p{color:var(--muted);font-size:.92rem}
+.next-day{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.section-h h3{font-family:var(--f-display);font-weight:500;font-size:1rem}
+.up-list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px dashed var(--line);border-radius:14px;overflow:hidden}
+.up-list li{display:grid;grid-template-columns:3em 34px minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px}
+.up-list li+li{border-top:1px solid var(--line)}
+.up-time{font-family:var(--f-display);font-weight:500;font-size:.92rem;font-variant-numeric:tabular-nums;color:var(--muted)}
 .empty{display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:16px;color:var(--muted)}
 
 /* Blister pack overview */
@@ -210,6 +215,10 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 .h-state{font-size:.76rem;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
 .h-state.taken{background:var(--ok-soft);color:var(--ok)}
 .h-state.missed{background:var(--bad-soft);color:var(--bad)}
+.h-state.late{background:var(--late-soft);color:var(--late)}
+.h-state.wait{background:var(--sunk);color:var(--muted)}
+.h-row.static{cursor:default}
+.dialog .h-list{max-height:none}
 
 /* Medicines */
 .med-group{display:flex;flex-direction:column;gap:10px}
@@ -269,7 +278,8 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 .status-note{font-size:.9rem;background:var(--sunk);border-radius:12px;padding:10px 12px}
 
 /* Toast + lightbox */
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + 16px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.92rem;width:max-content;max-width:calc(100% - 32px);box-shadow:0 4px 16px var(--shadow)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + 16px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.92rem;width:max-content;max-width:calc(100% - 32px);box-shadow:0 4px 16px var(--shadow);display:flex;align-items:center;gap:14px}
+.toast button{flex:none;border:0;background:none;color:inherit;font-weight:700;font-size:.92rem;text-decoration:underline;text-underline-offset:3px;padding:6px 2px;cursor:pointer;white-space:nowrap}
 .lightbox{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));border:0;width:100%;cursor:zoom-out}
 .lightbox img{max-width:100%;max-height:100%;border-radius:12px;object-fit:contain}
 
@@ -345,32 +355,37 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     </div>
 
     <section class="day" aria-labelledby="dayTitle">
-      <div class="daynav">
-        <button class="nav" id="prevDay" type="button" aria-label="Oldingi kun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
-        <div class="daytitle">
+      <div class="dayhead">
+        <div>
+          <p class="eyebrow">Bugun</p>
           <h2 id="dayTitle">1-kun</h2>
           <p id="dayDate"></p>
         </div>
-        <button class="nav" id="nextDay" type="button" aria-label="Keyingi kun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button class="btn small" type="button" id="dayDoneBtn" hidden>Belgilanganlar</button>
       </div>
-      <div class="daybar">
-        <span class="chip today" id="dayChip">Bugun</span>
-        <span class="daycount" id="dayCount"></span>
-        <button class="link" id="goToday" type="button" hidden>Bugunga qaytish</button>
-      </div>
+      <p class="daycount" id="dayCount"></p>
       <ol class="doses" id="doses"></ol>
+      <div class="done-card" id="dayDone" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+        <div><b>Bugungi dorilar belgilandi</b><p id="dayDoneText"></p></div>
+      </div>
       <div class="empty" id="dayEmpty" hidden>
-        <p id="dayEmptyText">Bu kunga dori rejalashtirilmagan.</p>
+        <p id="dayEmptyText">Bugun dori yo‘q.</p>
         <div class="btn-row">
           <button class="btn primary" type="button" data-new-med>Dori qo‘shish</button>
           <button class="btn" type="button" data-auth="login" id="dayEmptyLogin" hidden>Hisobga kirish</button>
         </div>
       </div>
-      <p class="daynote" id="dayNote" hidden></p>
+      <div class="daynote" id="dayNote" hidden></div>
+      <section class="next-day" id="nextDayBox" aria-labelledby="nextTitle" hidden>
+        <div class="section-h"><h3 id="nextTitle">Ertaga</h3><span id="nextCount"></span></div>
+        <ol class="up-list" id="nextList"></ol>
+        <p class="hint">Bu dorilarni belgilash o‘sha kuni shu yerda ochiladi.</p>
+      </section>
     </section>
 
     <section aria-labelledby="packTitle">
-      <div class="section-h"><h2 id="packTitle">Davolash jadvali</h2><span>Kunni tanlash uchun bosing</span></div>
+      <div class="section-h"><h2 id="packTitle">Davolash jadvali</h2><span>Kunni ko‘rish uchun bosing</span></div>
       <div class="pack">
         <div class="weekhead" id="weekhead" aria-hidden="true"></div>
         <div class="blister" id="blister"></div>
@@ -510,7 +525,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     </section>
 
     <p class="warn-box">Dori qabul qilishda shifokor ko‘rsatmasi va retseptdagi ko‘rsatmalar ustuvor.</p>
-    <p class="ver">Dori jadvali · versiya 2.2</p>
+    <p class="ver">Dori jadvali · versiya 2.3</p>
   </main>
 </div>
 
@@ -659,6 +674,19 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     <p id="mergeText"></p>
     <button class="btn primary big" type="button" id="mergeYes">Ha, hisobimga qo‘shish</button>
     <button class="btn big" type="button" id="mergeNo">Yo‘q, faqat hisobdagilar qolsin</button>
+  </div>
+</div>
+
+<!-- ============ KUN OYNASI ============ -->
+<div class="sheet top" id="daySheet" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dsTitle">
+    <div class="dialog-h">
+      <div><h2 id="dsTitle"></h2><p class="hint" id="dsDate"></p></div>
+      <button class="icon-btn" type="button" id="dsClose" aria-label="Yopish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <p class="hist-sum" id="dsSum"></p>
+    <ul class="h-list" id="dsList"></ul>
+    <p class="hint" id="dsNote"></p>
   </div>
 </div>
 
@@ -815,7 +843,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   }
 
   var state = load();
-  var ui = {tab: "today", viewDate: todayISO(), follow: true, histFilter: "all", histMed: "", histDays: 30};
+  var ui = {tab: "today", dayOpen: null, histFilter: "all", histMed: "", histDays: 30};
   function saveUi(){ try { localStorage.setItem(UI_KEY, JSON.stringify({tipClosed: tipClosed, accTipClosed: accTipClosed})); } catch (e) {} }
   var tipClosed = false, accTipClosed = false;
   try {
@@ -957,14 +985,6 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     });
     return {planned: planned, taken: taken, missed: missed};
   }
-  function navBounds(){
-    var lo = state.course.start, hi = state.course.end, t = todayISO();
-    state.meds.forEach(function(m){ if (m.start < lo) lo = m.start; if (m.end > hi) hi = m.end; });
-    if (t < lo) lo = t;
-    if (t > hi) hi = t;
-    return {min: lo, max: hi};
-  }
-
   // ================= Rendering: shared =================
   function thumbHTML(src, size, zoomable){
     // src: {photo, color, form}
@@ -989,6 +1009,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     else if (ui.tab === "history") renderHistory();
     else if (ui.tab === "meds") renderMeds();
     else renderSettings();
+    if (!$("daySheet").hidden) renderDaySheet();
     if (focusKey) {
       var el = document.querySelector('[data-fk="' + focusKey + '"]');
       if (el) el.focus({preventScroll: true});
@@ -1017,39 +1038,36 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     renderInstallTip();
     renderAccountBits();
 
-    var iso = ui.viewDate, rel = diffDays(today, iso);
+    // Today only: marked doses leave this list for the history; past days are closed.
+    var iso = today;
     var inCourse = iso >= c.start && iso <= c.end;
-    $("dayTitle").textContent = inCourse ? (diffDays(c.start, iso) + 1) + "-kun" : dm(iso);
-    $("dayDate").textContent = inCourse ? longDate(iso) : WEEKDAYS[weekday(iso)] + ", " + iso.slice(0, 4);
-    var b = navBounds();
-    $("prevDay").disabled = iso <= b.min;
-    $("nextDay").disabled = iso >= b.max;
-
-    var chip = $("dayChip");
-    chip.className = "chip" + (rel === 0 ? " today" : "");
-    chip.textContent = rel === 0 ? "Bugun" : rel === -1 ? "Kecha" : rel === 1 ? "Ertaga" : rel < 0 ? (-rel) + " kun oldin" : rel + " kundan keyin";
-    $("goToday").hidden = rel === 0;
+    $("dayTitle").textContent = inCourse ? cDay + "-kun" : dm(iso);
+    $("dayDate").textContent = inCourse ? longDate(iso) : WEEKDAYS[weekday(iso)];
 
     var doses = dosesOn(iso);
-    var takenN = doses.filter(function(d){ var m = state.marks[d.key]; return m && m.s === "taken"; }).length;
-    $("dayCount").textContent = doses.length ? takenN + " / " + doses.length + " ichildi" : "";
+    var open = doses.filter(function(d){ return !state.marks[d.key]; });
+    var takenN = 0, missedN = 0;
+    doses.forEach(function(d){ var m = state.marks[d.key]; if (m && m.s === "taken") takenN++; else if (m) missedN++; });
+    var markedToday = Object.keys(state.marks).filter(function(k){ return k.slice(0, 10) === iso; }).length;
+    $("dayCount").textContent = doses.length
+      ? takenN + " / " + doses.length + " ichildi" + (open.length ? " · " + open.length + " ta qoldi" : "")
+      : "";
+    $("dayDoneBtn").hidden = markedToday === 0;
+    $("dayDoneBtn").textContent = "Belgilanganlar (" + markedToday + ")";
 
     var nextKey = null;
-    if (rel === 0) for (var j = 0; j < doses.length; j++) {
-      var s0 = doseStatus(doses[j], 0);
-      if (s0 === "now" || s0 === "soon") { nextKey = doses[j].key; break; }
+    for (var j = 0; j < open.length; j++) {
+      var s0 = doseStatus(open[j], 0);
+      if (s0 === "now" || s0 === "soon") { nextKey = open[j].key; break; }
     }
 
-    $("doses").innerHTML = doses.map(function(d){
-      var m = d.med, st = doseStatus(d, rel), mark = state.marks[d.key];
-      var cls = "dose" + (st === "taken" ? " is-taken" : st === "missed" ? " is-missed" : "") + (d.key === nextKey ? " is-next" : "");
-      var line = "";
-      if (st === "taken") line = '<p class="dose-state">Ichildi' + (mark.at ? " · " + fmtAt(mark.at, iso) + " da belgilandi" : "") + "</p>";
-      else if (st === "missed") line = '<p class="dose-state">Ichilmadi' + (mark.at ? " · " + fmtAt(mark.at, iso) + " da belgilandi" : "") + "</p>";
-      else if (st === "late") line = '<span class="flag late">Vaqti o‘tdi, belgilanmagan</span>';
-      else if (d.key === nextKey && st === "now") line = '<span class="flag now">Ichish vaqti</span>';
-      else if (d.key === nextKey) line = '<span class="flag next">Navbatdagi · ' + untilText(toMin(d.time) - nowMin()) + "</span>";
-      var dis = rel > 0 ? " disabled" : "";
+    $("doses").innerHTML = open.map(function(d){
+      var m = d.med, st = doseStatus(d, 0);
+      var cls = "dose" + (d.key === nextKey ? " is-next" : "");
+      var flag = "";
+      if (st === "late") flag = '<span class="flag late">Vaqti o‘tdi, belgilanmagan</span>';
+      else if (d.key === nextKey && st === "now") flag = '<span class="flag now">Ichish vaqti</span>';
+      else if (d.key === nextKey) flag = '<span class="flag next">Navbatdagi · ' + untilText(toMin(d.time) - nowMin()) + "</span>";
       var label = esc(m.name + (m.strength ? " " + m.strength : "") + ", " + d.time);
       return '<li class="' + cls + '">' +
         '<div class="dose-top">' +
@@ -1057,34 +1075,64 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
           thumbHTML(m, "", true) +
           '<div class="dose-body">' +
             '<p class="dose-name">' + esc(m.name) + (m.strength ? ' <span class="str">' + esc(m.strength) + "</span>" : "") + "</p>" +
-            '<p class="dose-how">' + esc(joinDot(m.qty, m.how)) + "</p>" + line +
+            '<p class="dose-how">' + esc(joinDot(m.qty, m.how)) + "</p>" + flag +
           "</div>" +
           '<button type="button" class="icon-btn" data-edit="' + m.id + '" aria-label="' + esc(m.name) + ' — tahrirlash">' + ICON_EDIT + "</button>" +
         "</div>" +
         '<div class="dose-actions">' +
-          '<button type="button" class="act yes" data-mark="' + d.key + '" data-act="taken" data-fk="y' + d.key + '" aria-pressed="' + (mark && mark.s === "taken" ? "true" : "false") + '" aria-label="' + label + ': ichdim"' + dis + ">" + ICON_YES + "Ichdim</button>" +
-          '<button type="button" class="act no" data-mark="' + d.key + '" data-act="missed" data-fk="n' + d.key + '" aria-pressed="' + (mark && mark.s === "missed" ? "true" : "false") + '" aria-label="' + label + ': ichmadim"' + dis + ">" + ICON_NO + "Ichmadim</button>" +
+          '<button type="button" class="act yes" data-mark="' + d.key + '" data-act="taken" data-fk="y' + d.key + '" aria-label="' + label + ': ichdim">' + ICON_YES + "Ichdim</button>" +
+          '<button type="button" class="act no" data-mark="' + d.key + '" data-act="missed" data-fk="n' + d.key + '" aria-label="' + label + ': ichmadim">' + ICON_NO + "Ichmadim</button>" +
         "</div>" +
       "</li>";
     }).join("");
-    $("dayEmpty").hidden = doses.length > 0;
+
+    var allDone = doses.length > 0 && open.length === 0;
+    $("dayDone").hidden = !allDone;
+    if (allDone) {
+      $("dayDoneText").textContent = doses.length + " tadan " + takenN + " tasi ichildi" +
+        (missedN ? ", " + missedN + " tasi ichilmadi" : "") + ". Bugungi kun yopildi, keyingi dorilar o‘z kunida shu yerda ochiladi.";
+    }
+
+    // The next day with medicines, shown once today has nothing left to mark.
+    var next = null;
+    if (allDone || doses.length === 0) {
+      for (var i = 1; i <= 60 && !next; i++) if (dosesOn(addDays(iso, i)).length) next = addDays(iso, i);
+    }
+    $("nextDayBox").hidden = !next;
+    if (next) {
+      var nd = dosesOn(next), ahead = diffDays(iso, next);
+      $("nextTitle").textContent = (ahead === 1 ? "Ertaga" : ahead + " kundan keyin") + " · " + longDate(next);
+      $("nextCount").textContent = nd.length + " ta";
+      $("nextList").innerHTML = nd.map(function(d){
+        var m = d.med;
+        return "<li>" +
+          '<span class="up-time">' + d.time + "</span>" +
+          thumbHTML(m, "sm", false) +
+          '<span class="h-main"><b>' + esc(m.name) + "</b>" + (m.strength ? " " + esc(m.strength) : "") + "<small>" + esc(joinDot(m.qty, m.how)) + "</small></span>" +
+        "</li>";
+      }).join("");
+    }
+
     var noMeds = state.meds.length === 0;
-    $("dayEmptyText").textContent = !noMeds ? "Bu kunga dori rejalashtirilmagan."
+    $("dayEmpty").hidden = !(doses.length === 0 && (noMeds || !next));
+    $("dayEmptyText").textContent = !noMeds ? "Bugun ichiladigan dori yo‘q."
       : cloud.phase === "in" && !cloud.gotServer ? "Hisobingizdan yuklanmoqda…"
       : cloud.phase === "out" ? "Hali dori qo‘shilmagan. Oldin hisob ochgan bo‘lsangiz, kiring: dorilaringiz va tarixingiz qaytadi."
       : "Hali dori qo‘shilmagan. Birinchi doringizni qo‘shing.";
     $("dayEmptyLogin").hidden = !(noMeds && cloud.phase === "out");
 
     var notes = [];
-    if (rel > 0 && doses.length) notes.push("Bu kun hali kelmagan. Belgilash shu kuni ochiladi.");
+    var y = addDays(iso, -1);
+    var yLeft = dosesOn(y).filter(function(d){ return !state.marks[d.key]; }).length;
+    if (yLeft) notes.push('<button type="button" class="notice-btn" data-open-day="' + y + '">Kecha ' + yLeft + " ta dori belgilanmay qoldi. Ko‘rish →</button>");
     state.meds.forEach(function(m){
       var e = effEnd(m);
-      if (e === iso && e >= m.start) notes.push(m.name + " — shu kuni oxirgi kun.");
-      if (addDays(e, 1) === iso && e >= m.start) notes.push(m.name + " kursi tugadi va arxivga o‘tdi.");
-      if (m.start === iso && m.start !== c.start) notes.push(m.name + " shu kundan boshlanadi.");
+      if (e === iso && e >= m.start) notes.push("<span>" + esc(m.name) + " — bugun oxirgi kun.</span>");
+      if (addDays(e, 1) === iso && e >= m.start) notes.push("<span>" + esc(m.name) + " kursi tugadi va arxivga o‘tdi.</span>");
+      if (m.start === iso && m.start !== c.start) notes.push("<span>" + esc(m.name) + " bugundan boshlanadi.</span>");
     });
     $("dayNote").hidden = notes.length === 0;
-    $("dayNote").textContent = notes.join(" ");
+    $("dayNote").innerHTML = notes.join("");
 
     renderBlister();
   }
@@ -1111,7 +1159,6 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
       else if (doses.length && taken === doses.length) cls += " full";
       else if (missed > 0) cls += " miss";
       if (iso === t) cls += " is-today";
-      if (iso === ui.viewDate) cls += " is-sel";
       var aria = k + "-kun, " + dm(iso) + ": " + doses.length + " dan " + taken + " ichildi" + (missed ? ", " + missed + " ichilmadi" : "") + (late ? ", " + late + " belgilanmagan" : "");
       html += '<button type="button" class="' + cls + '" data-day="' + iso + '" data-fk="c' + iso + '" aria-label="' + aria + '">' +
         '<span class="c-num">' + k + "</span>" +
@@ -1187,7 +1234,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
           var cur = findMed(r.medId);
           var src = {photo: cur ? cur.photo : null, color: cur ? cur.color : r.m.color, form: cur ? cur.form : r.m.form};
           var name = r.m.name || (cur ? cur.name : "Dori");
-          return '<li><button type="button" class="h-row" data-goto-day="' + date + '">' +
+          return '<li><button type="button" class="h-row" data-open-day="' + date + '">' +
             '<span class="h-time">' + r.time + "</span>" +
             thumbHTML(src, "sm", false) +
             '<span class="h-main"><b>' + esc(name) + "</b>" + (r.m.strength ? " " + esc(r.m.strength) : "") +
@@ -1254,29 +1301,114 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   }
 
   // ================= Actions =================
+  // A dose can be marked only on its own day, once. The toast offers a short undo for mis-taps;
+  // after that the mark is final and lives in the history.
+  var UNDO_MS = 5000;
+  var undo = {key: null, timer: null};
   function setMark(key, act){
     var p = key.split("|"), iso = p[0], med = findMed(p[1]);
-    if (!med || iso > todayISO()) return;
-    var cur = state.marks[key];
-    if (cur && cur.s === act) delete state.marks[key];
-    else state.marks[key] = {s: act, at: Date.now(), name: med.name, strength: med.strength, qty: med.qty, color: med.color, form: med.form};
+    if (!med || iso !== todayISO() || state.marks[key]) return;
+    state.marks[key] = {s: act, at: Date.now(), name: med.name, strength: med.strength, qty: med.qty, color: med.color, form: med.form};
     save(); askPersist();
     cloudSaveMark(key);
     render();
+    offerUndo(key, med.name + " " + p[2] + (act === "taken" ? " · ichildi" : " · ichilmadi") + ", tarixga yozildi");
   }
-  function goToDate(iso, scroll){
-    var b = navBounds();
-    if (iso < b.min) iso = b.min;
-    if (iso > b.max) iso = b.max;
-    ui.viewDate = iso;
-    ui.follow = iso === todayISO();
-    if (ui.tab !== "today") { ui.tab = "today"; saveUi(); }
+  function markWithEffect(btn){
+    var card = btn.closest(".dose");
+    if (!card || card.classList.contains("is-leaving")) return;
+    var key = btn.getAttribute("data-mark"), act = btn.getAttribute("data-act");
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) { setMark(key, act); return; }
+    card.classList.add("is-leaving");
+    setTimeout(function(){ setMark(key, act); }, 260);
+  }
+  function offerUndo(key, text){
+    clearTimeout(undo.timer);
+    clearTimeout(toastTimer);
+    undo.key = key;
+    var el = $("toast");
+    el.innerHTML = "<span>" + esc(text) + '</span><button type="button" data-undo>Bekor qilish</button>';
+    el.hidden = false;
+    undo.timer = setTimeout(function(){ undo.key = null; el.hidden = true; }, UNDO_MS);
+  }
+  function undoMark(){
+    var key = undo.key;
+    clearTimeout(undo.timer);
+    undo.key = null;
+    $("toast").hidden = true;
+    if (!key || !state.marks[key]) return;
+    delete state.marks[key];
+    save();
+    cloudSaveMark(key);
     render();
-    if (scroll) {
-      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      document.querySelector(".day").scrollIntoView({behavior: reduce ? "auto" : "smooth", block: "start"});
-    }
   }
+
+  // ---- day window: everything scheduled or marked on one date, read-only ----
+  function openDay(iso){
+    ui.dayOpen = iso;
+    renderDaySheet();
+    $("daySheet").hidden = false;
+    document.body.classList.add("locked");
+    try { history.pushState({sheet: 1}, ""); } catch (e) {}
+  }
+  function closeDay(fromPop){
+    if ($("daySheet").hidden) return;
+    $("daySheet").hidden = true;
+    ui.dayOpen = null;
+    document.body.classList.remove("locked");
+    if (!fromPop && history.state && history.state.sheet) { try { history.back(); } catch (e) {} }
+  }
+  function renderDaySheet(){
+    var iso = ui.dayOpen;
+    if (!iso) return;
+    var c = state.course, t = todayISO(), nm = nowMin();
+    var inCourse = iso >= c.start && iso <= c.end;
+    $("dsTitle").textContent = inCourse ? (diffDays(c.start, iso) + 1) + "-kun" : dm(iso);
+    $("dsDate").textContent = longDate(iso) + (iso === t ? " · bugun" : "");
+    var rows = dosesOn(iso).map(function(d){
+      return {time: d.time, key: d.key, src: d.med, name: d.med.name, strength: d.med.strength, mark: state.marks[d.key]};
+    });
+    var seen = {};
+    rows.forEach(function(r){ seen[r.key] = 1; });
+    Object.keys(state.marks).forEach(function(k){
+      if (k.slice(0, 10) !== iso || seen[k]) return;
+      var m = state.marks[k], p = k.split("|"), cur = findMed(p[1]);
+      rows.push({time: p[2], key: k, src: cur || {photo: null, color: m.color, form: m.form}, name: m.name || (cur ? cur.name : "Dori"), strength: m.strength, mark: m});
+    });
+    rows.sort(function(a, b){ return a.time < b.time ? -1 : a.time > b.time ? 1 : a.name.localeCompare(b.name); });
+    var n = {taken: 0, missed: 0, late: 0, wait: 0};
+    $("dsList").innerHTML = rows.map(function(r){
+      var st, label, sub = "";
+      if (r.mark) {
+        st = r.mark.s; label = st === "taken" ? "Ichildi" : "Ichilmadi";
+        if (r.mark.at) sub = fmtAt(r.mark.at, iso) + " da belgilangan";
+      } else if (iso < t || (iso === t && nm - toMin(r.time) > LATE_MIN)) {
+        st = "late"; label = "Belgilanmagan";
+      } else {
+        st = "wait"; label = iso > t ? "Hali kelmagan" : "Kutilmoqda";
+      }
+      n[st]++;
+      return '<li><div class="h-row static">' +
+        '<span class="h-time">' + r.time + "</span>" +
+        thumbHTML(r.src, "sm", true) +
+        '<span class="h-main"><b>' + esc(r.name) + "</b>" + (r.strength ? " " + esc(r.strength) : "") + (sub ? "<small>" + sub + "</small>" : "") + "</span>" +
+        '<span class="h-state ' + st + '">' + label + "</span>" +
+      "</div></li>";
+    }).join("");
+    $("dsList").hidden = rows.length === 0;
+    var parts = [];
+    if (n.taken) parts.push("<span><b>" + n.taken + "</b> ichildi</span>");
+    if (n.missed) parts.push("<span><b>" + n.missed + "</b> ichilmadi</span>");
+    if (n.late) parts.push("<span><b>" + n.late + "</b> belgilanmagan</span>");
+    if (n.wait) parts.push("<span><b>" + n.wait + "</b> " + (iso > t ? "rejada" : "kutilmoqda") + "</span>");
+    $("dsSum").innerHTML = parts.join("");
+    $("dsNote").textContent = !rows.length ? "Bu kunga dori rejalashtirilmagan."
+      : iso < t ? "Bu kun yopilgan. Belgilarni o‘zgartirib bo‘lmaydi."
+      : iso === t ? "Bugungi dorilarni “Bugun” ekranida belgilang. Belgilangan dori o‘zgarmaydi."
+      : "Bu kun hali kelmagan. Dorilarni o‘sha kuni belgilaysiz.";
+  }
+
   function switchTab(t){
     if (t === ui.tab) { window.scrollTo(0, 0); return; }
     ui.tab = t; saveUi(); render(); window.scrollTo(0, 0);
@@ -1285,6 +1417,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   var toastTimer = null;
   function toast(msg){
     var el = $("toast");
+    if (undo && undo.key) { clearTimeout(undo.timer); undo.key = null; }
     el.textContent = msg; el.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ el.hidden = true; }, 2400);
@@ -1379,7 +1512,6 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
       imp.state.owner = state.owner;
       imp.state.profile = state.profile;
       state = imp.state;
-      ui.viewDate = todayISO(); ui.follow = true;
       save(); render(); toast("Zaxira tiklandi");
       if (cloudOn()) replaceCloud();
     });
@@ -1445,7 +1577,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     draft = null;
     if (!fromPop && history.state && history.state.sheet) { try { history.back(); } catch (e) {} }
   }
-  window.addEventListener("popstate", function(){ closeEditor(true); closeAuth(true); if (!$("lightbox").hidden) $("lightbox").hidden = true; });
+  window.addEventListener("popstate", function(){ closeEditor(true); closeAuth(true); closeDay(true); if (!$("lightbox").hidden) $("lightbox").hidden = true; });
 
   function nextColor(){
     var used = {}; state.meds.forEach(function(m){ if (medStatus(m) !== "archived") used[m.color] = 1; });
@@ -2004,12 +2136,13 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     if ((el = t.closest("[data-auth-mode]"))) { setAuthMode(el.getAttribute("data-auth-mode")); return; }
     if ((el = t.closest("[data-auth]"))) { openAuth(el.getAttribute("data-auth")); return; }
     if ((el = t.closest("[data-tab]"))) { switchTab(el.getAttribute("data-tab")); return; }
-    if ((el = t.closest("[data-mark]"))) { if (!el.disabled) setMark(el.getAttribute("data-mark"), el.getAttribute("data-act")); return; }
+    if ((el = t.closest("[data-undo]"))) { undoMark(); return; }
+    if ((el = t.closest("[data-mark]"))) { if (!el.disabled) markWithEffect(el); return; }
     if ((el = t.closest("[data-zoom]"))) { zoom(photoURLs[el.getAttribute("data-zoom")]); return; }
     if ((el = t.closest("[data-edit]"))) { var m = findMed(el.getAttribute("data-edit")); if (m) openEditor(m); return; }
     if ((el = t.closest("[data-new-med]"))) { openEditor(null); return; }
-    if ((el = t.closest("[data-day]"))) { goToDate(el.getAttribute("data-day"), true); return; }
-    if ((el = t.closest("[data-goto-day]"))) { goToDate(el.getAttribute("data-goto-day"), false); window.scrollTo(0, 0); return; }
+    if ((el = t.closest("[data-day]"))) { openDay(el.getAttribute("data-day")); return; }
+    if ((el = t.closest("[data-open-day]"))) { openDay(el.getAttribute("data-open-day")); return; }
     if ((el = t.closest("[data-install]"))) { doInstall(); return; }
     if ((el = t.closest("[data-hf]"))) { ui.histFilter = el.getAttribute("data-hf"); ui.histDays = 30; render(); return; }
     if ((el = t.closest("[data-form]"))) {
@@ -2031,9 +2164,9 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     }
   });
 
-  $("prevDay").addEventListener("click", function(){ goToDate(addDays(ui.viewDate, -1), false); });
-  $("nextDay").addEventListener("click", function(){ goToDate(addDays(ui.viewDate, 1), false); });
-  $("goToday").addEventListener("click", function(){ goToDate(todayISO(), false); });
+  $("dayDoneBtn").addEventListener("click", function(){ openDay(todayISO()); });
+  $("dsClose").addEventListener("click", function(){ closeDay(false); });
+  $("daySheet").addEventListener("click", function(e){ if (e.target === $("daySheet")) closeDay(false); });
   $("installTipClose").addEventListener("click", function(){ tipClosed = true; saveUi(); render(); });
   $("installBtn").addEventListener("click", doInstall);
 
@@ -2081,6 +2214,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     if (e.key !== "Escape") return;
     if (!$("lightbox").hidden) $("lightbox").hidden = true;
     else if (!$("authSheet").hidden) closeAuth(false);
+    else if (!$("daySheet").hidden) closeDay(false);
     else closeEditor(false);
   });
 
@@ -2090,7 +2224,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   var lastToday = todayISO();
   function tick(){
     var t = todayISO();
-    if (t !== lastToday) { lastToday = t; if (ui.follow) ui.viewDate = t; }
+    if (t !== lastToday) lastToday = t;
     if ($("sheet").hidden) render();
   }
   setInterval(tick, 30000);
