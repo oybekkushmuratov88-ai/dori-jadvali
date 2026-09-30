@@ -1,0 +1,1561 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dori jadvali</title>
+<meta name="description" content="Dorilarni “Ichdim / Ichmadim” deb belgilash, qabul tarixi va dorilar arxivi.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#EDF1F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1513" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dorilar">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="preload" href="fonts/golos-text-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"Golos Text";src:url(fonts/golos-text-latin.woff2) format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Unbounded";src:url(fonts/unbounded-latin.woff2) format("woff2");font-weight:500 700;font-display:swap}
+
+/* Layout: one phone-width column per tab (Bugun / Tarix / Dorilar / Sozlamalar) above a fixed bottom tab bar; medicine editor opens as a bottom sheet */
+:root{
+  --bg:#EDF1F0; --surface:#FFFFFF; --sunk:#E2E8E6; --ink:#0F2320; --muted:#566863; --line:#D1DBD8;
+  --accent:#2446C8; --on-accent:#FFFFFF; --accent-soft:#E3E8FB;
+  --ok:#1B7F46; --on-ok:#FFFFFF; --ok-soft:#DCF0E3; --ok-line:#A9D8BB;
+  --bad:#BE3328; --on-bad:#FFFFFF; --bad-soft:#FAE2DF; --bad-line:#EDB2AB;
+  --late:#9A5E0C; --late-soft:#FAEED6;
+  --foil-1:#DDE4E2; --foil-2:#C3CDCA; --bubble:#F7FAF9; --bubble-hi:#FFFFFF;
+  --shadow:rgba(15,35,32,.14); --scrim:rgba(15,35,32,.45); --cap2:#EEE6EA;
+  --c0:#7A57D1; --c1:#E0A21B; --c2:#3A86D4; --c3:#D4578A; --c4:#1597A8; --c5:#E0662B; --c6:#5E6E8C; --c7:#8A7A2E;
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:16px; --tab-h:62px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0D1513; --surface:#15201D; --sunk:#1B2724; --ink:#E4EEEB; --muted:#94A6A1; --line:#27352F;
+    --accent:#93A6FF; --on-accent:#0D1513; --accent-soft:#1E2744;
+    --ok:#4CC27D; --on-ok:#06140C; --ok-soft:#14301F; --ok-line:#23553A;
+    --bad:#FF7B6F; --on-bad:#1E0806; --bad-soft:#3A1916; --bad-line:#6A2D27;
+    --late:#E6AA4E; --late-soft:#33260F;
+    --foil-1:#1D2926; --foil-2:#141D1B; --bubble:#1A2522; --bubble-hi:#26332F;
+    --shadow:rgba(0,0,0,.4); --scrim:rgba(0,0,0,.6); --cap2:#3A3236;
+    --c0:#A68BF0; --c1:#F0BC45; --c2:#6AAEF0; --c3:#EC7FA9; --c4:#4CC3D2; --c5:#F08A55; --c6:#9AA8C4; --c7:#C8B65A;
+    color-scheme:dark;
+  }
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--f-body);-webkit-tap-highlight-color:transparent;padding-top:env(safe-area-inset-top,0px)}
+body.locked{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{-webkit-appearance:none;appearance:none}
+[hidden]{display:none!important}
+img{max-width:100%}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;opacity:0}
+
+.app{max-width:36rem;margin-inline:auto;padding-inline:16px;padding-block:14px calc(var(--tab-h) + 32px + env(safe-area-inset-bottom,0px))}
+.view{display:flex;flex-direction:column;gap:22px}
+
+/* Generic */
+.eyebrow{font-size:.75rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.page-h{display:flex;flex-direction:column;gap:4px;padding-top:4px}
+.page-h h1{font-family:var(--f-display);font-weight:700;font-size:1.45rem;line-height:1.2}
+.page-h p{color:var(--muted);font-size:.95rem}
+.section-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.section-h h2{font-family:var(--f-display);font-weight:500;font-size:1.02rem}
+.section-h span{font-size:.85rem;color:var(--muted)}
+.hint{font-size:.88rem;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;font-size:.98rem;cursor:pointer;text-decoration:none;text-align:center}
+.btn svg{width:20px;height:20px;flex:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.big{min-height:52px;width:100%;font-size:1.02rem}
+.btn.danger{color:var(--bad);border-color:var(--bad-line)}
+.btn.solid-danger{background:var(--bad);border-color:var(--bad);color:var(--on-bad)}
+.btn:active{transform:scale(.985)}
+.icon-btn{width:40px;height:40px;border-radius:12px;border:0;background:none;display:grid;place-items:center;color:var(--muted);cursor:pointer;flex:none}
+.icon-btn svg{width:20px;height:20px}
+.link{background:none;border:0;padding:6px 2px;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h2{font-size:1.02rem;font-weight:700}
+.warn-box{background:var(--sunk);border-radius:12px;padding:12px 14px;font-size:.9rem}
+
+/* Thumbs + pill glyphs */
+.thumb{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--sunk);overflow:hidden;border:0;padding:0}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+button.thumb{cursor:zoom-in;border:1px solid var(--line)}
+.thumb.sm{width:34px;height:34px;border-radius:10px}
+.thumb.lg{width:56px;height:56px;border-radius:14px}
+.pill{display:block;width:20px;height:13px;border-radius:50%;background:var(--med);box-shadow:inset 0 -2px 0 var(--shadow)}
+.pill.capsule{width:24px;height:11px;border-radius:6px;background:linear-gradient(90deg,var(--med) 0 50%,var(--cap2) 50% 100%)}
+.pill.other{width:14px;height:19px;border-radius:7px 7px 9px 9px}
+.thumb.sm .pill{transform:scale(.85)}
+
+/* Today: header */
+.top{display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:40px;height:40px;border-radius:11px;flex:none}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:1.25rem;line-height:1.15}
+.brand p{color:var(--muted);font-size:.9rem}
+.course-bar{display:flex;height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.course-bar i{display:block;height:100%;transition:width .3s ease}
+.course-bar .ok{background:var(--ok)}
+.course-bar .bad{background:var(--bad)}
+.course-text{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.course-text b{color:var(--ink);font-weight:700}
+.tip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;background:var(--accent-soft);border-radius:14px;padding:12px 8px 12px 14px;font-size:.92rem}
+.tip b{display:block;margin-bottom:2px}
+.tip .btn{margin-top:10px;min-height:40px}
+
+/* Today: day */
+.day{display:flex;flex-direction:column;gap:12px}
+.daynav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;padding-block:8px;background:var(--bg)}
+.nav{width:48px;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
+.nav:disabled{opacity:.35;cursor:default}
+.nav svg{width:22px;height:22px}
+.daytitle{text-align:center;min-width:0}
+.daytitle h2{font-family:var(--f-display);font-weight:700;font-size:1.25rem;line-height:1.2}
+.daytitle p{color:var(--muted);font-size:.93rem}
+.daybar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;font-size:.95rem}
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:.8rem;font-weight:600;background:var(--sunk);color:var(--muted)}
+.chip.today{background:var(--accent);color:var(--on-accent)}
+.daycount{font-weight:600;font-variant-numeric:tabular-nums}
+.daybar .link{margin-left:auto}
+
+.doses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.dose{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 10px 12px 14px;display:flex;flex-direction:column;gap:12px;transition:background-color .2s ease,border-color .2s ease}
+.dose.is-taken{background:var(--ok-soft);border-color:var(--ok-line)}
+.dose.is-missed{background:var(--bad-soft);border-color:var(--bad-line)}
+.dose.is-next{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.dose-top{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px;align-items:start}
+.dose-time{font-family:var(--f-display);font-weight:500;font-size:1.12rem;line-height:1.3;font-variant-numeric:tabular-nums;min-width:3.3em;padding-top:10px}
+.dose-body{display:flex;flex-direction:column;gap:2px;min-width:0;padding-top:2px}
+.dose-name{font-weight:700;font-size:1.02rem;line-height:1.3;overflow-wrap:anywhere}
+.dose-name .str{font-weight:500;color:var(--muted)}
+.dose-how{color:var(--muted);font-size:.92rem;overflow-wrap:anywhere}
+.dose-state{font-size:.87rem;font-weight:600;margin-top:2px}
+.is-taken .dose-state{color:var(--ok)}
+.is-missed .dose-state{color:var(--bad)}
+.flag{display:inline-block;width:max-content;max-width:100%;margin-top:4px;padding:2px 9px;border-radius:99px;font-size:.78rem;font-weight:600}
+.flag.late{background:var(--late-soft);color:var(--late)}
+.flag.now,.flag.next{background:var(--accent-soft);color:var(--accent)}
+.dose-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-right:4px}
+.act{min-height:50px;border-radius:13px;border:1.5px solid var(--line);background:var(--bg);font-weight:600;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease}
+.act svg{width:19px;height:19px;flex:none}
+.act.yes{color:var(--ok)}
+.act.no{color:var(--bad)}
+.act.yes[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
+.act.no[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:var(--on-bad)}
+.act:disabled{cursor:not-allowed;color:var(--muted);opacity:.55}
+.act:active:not(:disabled){transform:scale(.98)}
+.daynote{font-size:.9rem;color:var(--muted);background:var(--sunk);border-radius:12px;padding:10px 12px}
+.empty{display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:16px;color:var(--muted)}
+
+/* Blister pack overview */
+.pack{background:linear-gradient(160deg,var(--foil-1),var(--foil-2));border-radius:20px;padding:12px 10px 14px;box-shadow:0 1px 3px var(--shadow)}
+.weekhead,.blister{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.weekhead{margin-bottom:6px}
+.weekhead span{text-align:center;font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.cell{position:relative;min-width:0;max-width:100%;aspect-ratio:4 / 5;border-radius:14px;border:1px solid var(--line);background:radial-gradient(120% 90% at 30% 20%,var(--bubble-hi),var(--bubble));box-shadow:0 2px 4px var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 2px 7px;cursor:pointer;line-height:1}
+.cell .c-num{font-family:var(--f-display);font-weight:500;font-size:.95rem;font-variant-numeric:tabular-nums}
+.cell .c-date{font-size:.62rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.c-dots{display:grid;grid-template-columns:repeat(3,6px);gap:3px;justify-content:center}
+.c-dots i{width:6px;height:6px;border-radius:50%;border:1.2px solid var(--muted);opacity:.55}
+.c-dots i.ok{background:var(--ok);border-color:var(--ok);opacity:1}
+.c-dots i.bad{background:var(--bad);border-color:var(--bad);opacity:1}
+.c-dots i.late{border-color:var(--late);opacity:1}
+.cell.full{background:var(--ok-soft);border-color:var(--ok-line);box-shadow:inset 0 2px 4px var(--shadow)}
+.cell.miss{border-color:var(--bad-line);border-width:1.5px}
+.cell.future{opacity:.72;box-shadow:none}
+.cell.is-today::after{content:"";position:absolute;inset:-4px;border-radius:17px;border:2px solid var(--accent);pointer-events:none}
+.cell.is-sel{outline:2px dashed var(--ink);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:.82rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--muted)}
+.legend i.ok{background:var(--ok);border-color:var(--ok)}
+.legend i.bad{background:var(--bad);border-color:var(--bad)}
+.legend i.late{border-color:var(--late)}
+
+/* History */
+.hist-sum{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.93rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.hist-sum b{color:var(--ink)}
+.filters{display:flex;flex-direction:column;gap:10px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--sunk);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:none;border-radius:9px;min-height:40px;font-weight:600;font-size:.9rem;color:var(--muted);cursor:pointer;padding:0 6px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px var(--shadow)}
+.select,.input{width:100%;min-width:0;min-height:48px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:16px;display:block}
+.select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 21px,calc(100% - 14px) 21px;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+input[type="date"].input,input[type="time"].input{-webkit-appearance:none;appearance:none;text-align:left}
+input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::-webkit-date-and-time-value{text-align:left}
+.h-days{display:flex;flex-direction:column;gap:18px}
+.h-day{display:flex;flex-direction:column;gap:8px}
+.h-day-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.h-day-h b{font-weight:700}
+.h-day-h span{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.h-list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.h-list li+li{border-top:1px solid var(--line)}
+.h-row{width:100%;display:grid;grid-template-columns:3em 34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;background:none;border:0;text-align:left;cursor:pointer}
+.h-time{font-family:var(--f-display);font-weight:500;font-size:.92rem;font-variant-numeric:tabular-nums}
+.h-main{min-width:0;line-height:1.3}
+.h-main b{font-weight:700;overflow-wrap:anywhere}
+.h-main small{display:block;color:var(--muted);font-size:.8rem}
+.h-state{font-size:.76rem;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.h-state.taken{background:var(--ok-soft);color:var(--ok)}
+.h-state.missed{background:var(--bad-soft);color:var(--bad)}
+
+/* Medicines */
+.med-group{display:flex;flex-direction:column;gap:10px}
+.med-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.med-card{width:100%;display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer}
+.med-card.is-archived{background:var(--sunk)}
+.med-info{min-width:0;display:flex;flex-direction:column;gap:2px}
+.med-info b{font-weight:700;overflow-wrap:anywhere}
+.med-info .str{font-weight:500;color:var(--muted)}
+.med-info .muted{color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
+.med-times{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.med-times i{font-style:normal;font-variant-numeric:tabular-nums;font-size:.8rem;font-weight:600;background:var(--sunk);border-radius:8px;padding:2px 7px}
+.med-card.is-archived .med-times i{background:var(--surface)}
+.med-range{font-size:.83rem;color:var(--muted);margin-top:4px}
+.med-range b{color:var(--ink);font-weight:600}
+.chev{color:var(--muted);font-size:1.4rem;line-height:1}
+
+/* Settings */
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field > label,.field .lbl{font-weight:600;font-size:.92rem}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+.btn-row .btn{flex:1 1 10rem}
+.form-err{color:var(--bad);font-size:.9rem;font-weight:600}
+.confirm{display:flex;flex-direction:column;gap:10px;background:var(--bad-soft);border:1px solid var(--bad-line);border-radius:12px;padding:12px}
+.steps{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;font-size:.93rem}
+.ver{font-size:.8rem;color:var(--muted);text-align:center}
+
+/* Bottom tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar-in{max-width:36rem;margin-inline:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tab{height:var(--tab-h);border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.72rem;font-weight:600;color:var(--muted);cursor:pointer}
+.tab svg{width:24px;height:24px}
+.tab[aria-current="page"]{color:var(--accent)}
+
+/* Sheet (medicine editor) */
+.sheet{position:fixed;inset:0;z-index:40;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center}
+.sheet-panel{width:100%;max-width:36rem;height:calc(100% - env(safe-area-inset-top,0px) - 10px);background:var(--bg);border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -4px 24px var(--shadow)}
+.sheet-h{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+.sheet-h h2{font-size:1.05rem;font-weight:700;text-align:center}
+.sheet-h .link{text-decoration:none;padding:8px 10px}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:16px 16px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
+.photo-field{display:grid;grid-template-columns:112px minmax(0,1fr);gap:14px;align-items:center}
+.photo-box{width:112px;height:112px;border-radius:16px;background:var(--sunk);border:1.5px dashed var(--line);display:grid;place-items:center;overflow:hidden;color:var(--muted);font-size:.78rem;text-align:center;padding:0}
+.photo-box img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-box svg{width:34px;height:34px}
+.photo-actions{display:flex;flex-direction:column;gap:8px;min-width:0}
+.photo-actions .btn{min-height:42px;font-size:.92rem;padding:0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;font-size:.85rem;cursor:pointer}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatch{width:36px;height:36px;border-radius:50%;border:3px solid var(--bg);box-shadow:0 0 0 1px var(--line);background:var(--sw);cursor:pointer;padding:0}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
+.times{display:flex;flex-direction:column;gap:8px}
+.time-row{display:grid;grid-template-columns:minmax(0,1fr) 48px;gap:8px;align-items:center}
+.time-row .icon-btn{width:48px;height:48px;border:1px solid var(--line);background:var(--surface)}
+.status-note{font-size:.9rem;background:var(--sunk);border-radius:12px;padding:10px 12px}
+
+/* Toast + lightbox */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + 16px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.92rem;width:max-content;max-width:calc(100% - 32px);box-shadow:0 4px 16px var(--shadow)}
+.lightbox{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));border:0;width:100%;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:100%;border-radius:12px;object-fit:contain}
+
+@media (min-width:560px){
+  .cell .c-num{font-size:1.05rem}
+  .cell .c-date{font-size:.7rem}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ BUGUN ============ -->
+  <main class="view" id="view-today" aria-labelledby="appTitle">
+    <header class="top">
+      <div class="brand">
+        <img src="icons/icon-192.png" alt="">
+        <div>
+          <h1 id="appTitle">Dori jadvali</h1>
+          <p id="courseLine">Davolash: 30-sentabr – 27-oktabr, 2026</p>
+        </div>
+      </div>
+      <div class="course-bar" aria-hidden="true"><i class="ok" id="barOk" style="width:0%"></i><i class="bad" id="barBad" style="width:0%"></i></div>
+      <p class="course-text" id="courseText"></p>
+    </header>
+
+    <div class="tip" id="installTip" hidden>
+      <div id="installTipText"></div>
+      <button class="icon-btn" type="button" id="installTipClose" aria-label="Yopish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+
+    <section class="day" aria-labelledby="dayTitle">
+      <div class="daynav">
+        <button class="nav" id="prevDay" type="button" aria-label="Oldingi kun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="daytitle">
+          <h2 id="dayTitle">1-kun</h2>
+          <p id="dayDate"></p>
+        </div>
+        <button class="nav" id="nextDay" type="button" aria-label="Keyingi kun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="daybar">
+        <span class="chip today" id="dayChip">Bugun</span>
+        <span class="daycount" id="dayCount"></span>
+        <button class="link" id="goToday" type="button" hidden>Bugunga qaytish</button>
+      </div>
+      <ol class="doses" id="doses"></ol>
+      <div class="empty" id="dayEmpty" hidden>
+        <p>Bu kunga dori rejalashtirilmagan.</p>
+        <button class="btn primary" type="button" data-new-med>Dori qo‘shish</button>
+      </div>
+      <p class="daynote" id="dayNote" hidden></p>
+    </section>
+
+    <section aria-labelledby="packTitle">
+      <div class="section-h"><h2 id="packTitle">Davolash jadvali</h2><span>Kunni tanlash uchun bosing</span></div>
+      <div class="pack">
+        <div class="weekhead" id="weekhead" aria-hidden="true"></div>
+        <div class="blister" id="blister"></div>
+      </div>
+      <div class="legend">
+        <span><i class="ok"></i>ichildi</span>
+        <span><i class="bad"></i>ichilmadi</span>
+        <span><i class="late"></i>belgilanmagan</span>
+        <span><i></i>hali vaqti kelmagan</span>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ TARIX ============ -->
+  <main class="view" id="view-history" aria-labelledby="histTitle" hidden>
+    <header class="page-h">
+      <h1 id="histTitle">Tarix</h1>
+      <p>“Ichdim” yoki “Ichmadim” deb belgilangan har bir qabul shu yerda saqlanadi.</p>
+    </header>
+    <p class="hist-sum" id="histSum"></p>
+    <div class="filters">
+      <div class="seg" id="histSeg">
+        <button type="button" data-hf="all" aria-pressed="true">Hammasi</button>
+        <button type="button" data-hf="taken" aria-pressed="false">Ichildi</button>
+        <button type="button" data-hf="missed" aria-pressed="false">Ichilmadi</button>
+      </div>
+      <label class="sr" for="histMed">Dori bo‘yicha saralash</label>
+      <select class="select" id="histMed"><option value="">Barcha dorilar</option></select>
+    </div>
+    <div class="h-days" id="histList"></div>
+    <div class="empty" id="histEmpty" hidden>
+      <p>Hali belgilangan qabul yo‘q. “Bugun” bo‘limida dorini “Ichdim” deb belgilasangiz, u shu yerda paydo bo‘ladi.</p>
+    </div>
+    <button class="btn" type="button" id="histMore" hidden>Oldingi kunlarni ko‘rsatish</button>
+    <button class="btn" type="button" id="histCsv">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
+      Tarixni fayl qilib saqlash (Excel)
+    </button>
+  </main>
+
+  <!-- ============ DORILAR ============ -->
+  <main class="view" id="view-meds" aria-labelledby="medsTitle" hidden>
+    <header class="page-h">
+      <h1 id="medsTitle">Dorilar</h1>
+      <p>Dorini bosib nomi, rasmi, ichish vaqtlari va muddatini o‘zgartirishingiz mumkin.</p>
+    </header>
+    <button class="btn primary big" type="button" data-new-med>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Dori qo‘shish
+    </button>
+    <section class="med-group" id="grpActive">
+      <div class="section-h"><h2>Faol dorilar</h2><span id="cntActive"></span></div>
+      <ul class="med-list" id="medsActive"></ul>
+      <p class="hint" id="noActive" hidden>Hozir faol dori yo‘q.</p>
+    </section>
+    <section class="med-group" id="grpUpcoming" hidden>
+      <div class="section-h"><h2>Rejadagi dorilar</h2><span id="cntUpcoming"></span></div>
+      <ul class="med-list" id="medsUpcoming"></ul>
+    </section>
+    <section class="med-group" id="grpArchived">
+      <div class="section-h"><h2>Arxiv dorilar</h2><span id="cntArchived"></span></div>
+      <p class="hint">Muddati tugagan dori jadvaldan o‘zi chiqib, shu yerga o‘tadi. Ularning tarixi saqlanib qoladi.</p>
+      <ul class="med-list" id="medsArchived"></ul>
+    </section>
+  </main>
+
+  <!-- ============ SOZLAMALAR ============ -->
+  <main class="view" id="view-settings" aria-labelledby="setTitle" hidden>
+    <header class="page-h">
+      <h1 id="setTitle">Sozlamalar</h1>
+    </header>
+
+    <section class="panel" aria-labelledby="courseH">
+      <h2 id="courseH">Umumiy davolash muddati</h2>
+      <div class="row2">
+        <div class="field"><label for="courseStart">Boshlanish sanasi</label><input class="input" type="date" id="courseStart"></div>
+        <div class="field"><label for="courseEnd">Tugash sanasi</label><input class="input" type="date" id="courseEnd"></div>
+      </div>
+      <p class="hint" id="courseInfo"></p>
+      <p class="form-err" id="courseErr" hidden></p>
+      <p class="hint">Har bir dorining o‘z boshlanish va tugash sanasi “Dorilar” bo‘limida alohida kiritiladi.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="backupH">
+      <h2 id="backupH">Zaxira nusxa</h2>
+      <p class="hint">Barcha ma’lumotlar faqat shu telefonda saqlanadi. Telefonni almashtirsangiz yoki ilovani o‘chirsangiz, avval zaxira faylni saqlab qo‘ying (masalan, “Fayllar” yoki Telegram’ga).</p>
+      <div class="btn-row">
+        <button class="btn" type="button" id="exportBtn">Zaxira faylni saqlash</button>
+        <label class="btn" for="importInput">Zaxiradan tiklash</label>
+        <input class="sr" type="file" id="importInput" accept="application/json,text/plain,.json">
+      </div>
+      <div class="confirm" id="importConfirm" hidden>
+        <p id="importConfirmText">Hozirgi ma’lumotlar zaxiradagi bilan almashtiriladi.</p>
+        <div class="btn-row">
+          <button class="btn solid-danger" type="button" id="importYes">Ha, tiklash</button>
+          <button class="btn" type="button" id="importNo">Bekor qilish</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="installH" id="installPanel">
+      <h2 id="installH">Telefonga o‘rnatish</h2>
+      <ol class="steps">
+        <li><b>iPhone:</b> ushbu sahifani <b>Safari</b>’da oching → pastdagi “Ulashish” (□↑) tugmasi → “На экран «Домой»” / “Add to Home Screen” → “Добавить / Add”.</li>
+        <li><b>Android:</b> <b>Chrome</b>’da oching → yuqoridagi ⋮ menyu → “Установить приложение” / “Install app” (yoki “Add to Home screen”).</li>
+      </ol>
+      <button class="btn primary" type="button" id="installBtn" hidden>Ilovani o‘rnatish</button>
+      <p class="hint" id="installedNote" hidden>Ilova o‘rnatilgan va internetsiz ham ishlaydi.</p>
+    </section>
+
+    <p class="warn-box">Dori qabul qilishda shifokor ko‘rsatmasi va retseptdagi ko‘rsatmalar ustuvor.</p>
+    <p class="ver">Dori jadvali · versiya 2.0</p>
+  </main>
+</div>
+
+<!-- ============ TAB BAR ============ -->
+<nav class="tabbar" aria-label="Bo‘limlar">
+  <div class="tabbar-in">
+    <button class="tab" type="button" data-tab="today" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M9 15l2 2 4-4"/></svg>
+      Bugun
+    </button>
+    <button class="tab" type="button" data-tab="history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3.5 4v4h4M12 7.5V12l3 2"/></svg>
+      Tarix
+    </button>
+    <button class="tab" type="button" data-tab="meds">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-40 12 12)"/><path d="M9.3 8.8l5.4 6.4"/></svg>
+      Dorilar
+    </button>
+    <button class="tab" type="button" data-tab="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Sozlamalar
+    </button>
+  </div>
+</nav>
+
+<!-- ============ DORI QO‘SHISH / TAHRIRLASH ============ -->
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-h">
+      <button class="icon-btn" type="button" id="sheetClose" aria-label="Yopish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h2 id="sheetTitle">Yangi dori</h2>
+      <button class="link" type="submit" form="medForm">Saqlash</button>
+    </div>
+    <form class="sheet-body" id="medForm" novalidate>
+      <p class="status-note" id="medStatusNote" hidden></p>
+
+      <div class="photo-field">
+        <button class="photo-box" type="button" id="photoBox" aria-label="Rasmni kattalashtirish">
+          <span id="photoEmpty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg><br>Rasm yo‘q</span>
+          <img id="photoImg" alt="" hidden>
+        </button>
+        <div class="photo-actions">
+          <label class="btn" for="photoCamera">Rasmga olish</label>
+          <input class="sr" type="file" id="photoCamera" accept="image/*" capture="environment">
+          <label class="btn" for="photoPick">Galereyadan tanlash</label>
+          <input class="sr" type="file" id="photoPick" accept="image/*">
+          <button class="btn danger" type="button" id="photoRemove" hidden>Rasmni o‘chirish</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fName">Dori nomi</label>
+        <input class="input" id="fName" type="text" autocomplete="off" autocapitalize="characters" placeholder="Masalan: KLACID" maxlength="80">
+      </div>
+      <div class="row2">
+        <div class="field"><label for="fStrength">Dozasi</label><input class="input" id="fStrength" type="text" autocomplete="off" placeholder="500 mg" maxlength="40"></div>
+        <div class="field"><label for="fQty">Bir martada</label><input class="input" id="fQty" type="text" autocomplete="off" placeholder="1 tabletka" maxlength="40"></div>
+      </div>
+      <div class="field">
+        <label for="fHow">Qanday ichiladi</label>
+        <input class="input" id="fHow" type="text" autocomplete="off" placeholder="ovqatdan keyin" maxlength="80">
+        <div class="chips" id="howChips"></div>
+      </div>
+
+      <div class="field">
+        <span class="lbl" id="formLbl">Shakli</span>
+        <div class="seg" id="fForm" role="group" aria-labelledby="formLbl">
+          <button type="button" data-form="tablet" aria-pressed="true">Tabletka</button>
+          <button type="button" data-form="capsule" aria-pressed="false">Kapsula</button>
+          <button type="button" data-form="other" aria-pressed="false">Boshqa</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" id="colorLbl">Rangi (jadvalda ajratib turish uchun)</span>
+        <div class="swatches" id="fColors" role="group" aria-labelledby="colorLbl"></div>
+      </div>
+
+      <div class="field">
+        <span class="lbl">Ichish vaqtlari</span>
+        <div class="times" id="fTimes"></div>
+        <button class="btn" type="button" id="addTime">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Vaqt qo‘shish
+        </button>
+      </div>
+
+      <div class="field">
+        <span class="lbl">Muddati</span>
+        <div class="row2">
+          <div class="field"><label for="fStart">Boshlanish</label><input class="input" id="fStart" type="date"></div>
+          <div class="field"><label for="fEnd">Tugash</label><input class="input" id="fEnd" type="date"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="fDays">Necha kun</label><input class="input" id="fDays" type="number" inputmode="numeric" min="1" max="3650"></div>
+          <p class="hint" style="align-self:end;padding-bottom:6px">Tugash sanasidan keyin dori o‘zi arxivga o‘tadi.</p>
+        </div>
+      </div>
+
+      <p class="form-err" id="formErr" hidden></p>
+      <button class="btn primary big" type="submit">Saqlash</button>
+
+      <div class="btn-row" id="editActions" hidden>
+        <button class="btn" type="button" id="archiveBtn">Hozir arxivga o‘tkazish</button>
+        <button class="btn" type="button" id="restoreBtn" hidden>Arxivdan qaytarish</button>
+        <button class="btn danger" type="button" id="deleteBtn">Dorini o‘chirish</button>
+      </div>
+      <div class="confirm" id="deleteConfirm" hidden>
+        <p>Dori ro‘yxatdan o‘chiriladi. Uning “Tarix”dagi belgilari saqlanib qoladi.</p>
+        <div class="btn-row">
+          <button class="btn solid-danger" type="button" id="deleteYes">Ha, o‘chirish</button>
+          <button class="btn" type="button" id="deleteNo">Bekor qilish</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<button class="lightbox" type="button" id="lightbox" aria-label="Yopish" hidden><img id="lightboxImg" alt=""></button>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ================= Constants =================
+  var LS_KEY = "dori.v2";
+  var UI_KEY = "dori.ui";
+  var LATE_MIN = 60;       // minutes after the dose time before an unmarked dose counts as overdue
+  var NCOLORS = 8;
+  var MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
+  var WEEKDAYS = ["Yakshanba","Dushanba","Seshanba","Chorshanba","Payshanba","Juma","Shanba"];
+  var WD_SHORT = ["Ya","Du","Se","Ch","Pa","Ju","Sh"];
+  var FORMS = {tablet: "1 tabletka", capsule: "1 kapsula", other: ""};
+  var HOW_CHIPS = ["och qoringa", "ovqatdan oldin", "ovqat bilan", "ovqatdan keyin", "tushlikdan keyin", "uxlashdan oldin"];
+
+  var ICON_YES = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var ICON_NO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>';
+  var ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+  var ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  // The prescription this app was built for (Dori_qabul_qilish_28_kunlik_jadval.docx).
+  function seed(){
+    return {
+      v: 2,
+      course: {start: "2026-09-30", end: "2026-10-27"},
+      meds: [
+        {id: "voniza",  name: "VONIZA",  strength: "20 mg",   qty: "1 tabletka", how: "ertalab, och qoringa", form: "tablet",  color: 0, times: ["06:30"],          start: "2026-09-30", end: "2026-10-27", photo: null, stoppedOn: null},
+        {id: "klacid",  name: "KLACID",  strength: "500 mg",  qty: "1 tabletka", how: "ovqatdan keyin",       form: "tablet",  color: 1, times: ["07:30", "19:30"], start: "2026-09-30", end: "2026-10-13", photo: null, stoppedOn: null},
+        {id: "klamoks", name: "KLAMOKS", strength: "1000 mg", qty: "1 tabletka", how: "ovqatdan keyin",       form: "tablet",  color: 2, times: ["08:30", "20:30"], start: "2026-09-30", end: "2026-10-13", photo: null, stoppedOn: null},
+        {id: "mikro",   name: "MIKROBALANS SINBIOTIK", strength: "", qty: "1 kapsula", how: "tushlikdan keyin", form: "capsule", color: 3, times: ["13:00"],          start: "2026-09-30", end: "2026-10-27", photo: null, stoppedOn: null}
+      ],
+      marks: {}
+    };
+  }
+
+  // ================= Helpers =================
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function pad(n){ return (n < 10 ? "0" : "") + n; }
+  function isISO(s){
+    if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    var d = new Date(Date.UTC(+s.slice(0,4), +s.slice(5,7) - 1, +s.slice(8,10)));
+    return d.getUTCDate() === +s.slice(8,10);
+  }
+  function isTime(t){ return typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t); }
+  function dayNum(iso){ return Math.round(Date.UTC(+iso.slice(0,4), +iso.slice(5,7) - 1, +iso.slice(8,10)) / 864e5); }
+  function isoFromNum(n){ var d = new Date(n * 864e5); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()); }
+  function addDays(iso, n){ return isoFromNum(dayNum(iso) + n); }
+  function diffDays(a, b){ return dayNum(b) - dayNum(a); }
+  function localISO(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function todayISO(){ return localISO(new Date()); }
+  function nowMin(){ var n = new Date(); return n.getHours() * 60 + n.getMinutes(); }
+  function toMin(t){ return (+t.slice(0,2)) * 60 + (+t.slice(3,5)); }
+  function weekday(iso){ return new Date(dayNum(iso) * 864e5).getUTCDay(); }
+  function dm(iso){ return (+iso.slice(8,10)) + "-" + MONTHS[+iso.slice(5,7) - 1]; }
+  function dmy(iso){ return dm(iso) + ", " + iso.slice(0,4); }
+  function longDate(iso){ return dm(iso) + ", " + WEEKDAYS[weekday(iso)]; }
+  function ddmm(iso){ return iso.slice(8,10) + "." + iso.slice(5,7); }
+  function rangeText(a, b){ return a.slice(0,4) === b.slice(0,4) ? dm(a) + " – " + dmy(b) : dmy(a) + " – " + dmy(b); }
+  function joinDot(){ return Array.prototype.filter.call(arguments, function(x){ return x; }).join(" · "); }
+  function newId(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function str(s, max){ return typeof s === "string" ? s.trim().slice(0, max) : ""; }
+  function uniqSorted(a){ var o = {}; a.forEach(function(x){ o[x] = 1; }); return Object.keys(o).sort(); }
+  function untilText(mins){
+    if (mins < 60) return mins + " daqiqadan so‘ng";
+    var h = Math.floor(mins / 60), m = mins % 60;
+    return m ? h + " soat " + m + " daqiqadan so‘ng" : h + " soatdan so‘ng";
+  }
+  function fmtAt(at, iso){
+    if (!at) return "";
+    var d = new Date(at), hm = pad(d.getHours()) + ":" + pad(d.getMinutes());
+    return localISO(d) === iso ? hm : pad(d.getDate()) + "." + pad(d.getMonth() + 1) + " " + hm;
+  }
+
+  // ================= State =================
+  function cleanMed(m){
+    if (!m || typeof m !== "object") return null;
+    if (typeof m.id !== "string" || !/^[A-Za-z0-9_-]{1,40}$/.test(m.id)) return null;
+    var times = uniqSorted((Array.isArray(m.times) ? m.times : []).filter(isTime));
+    if (!times.length || !isISO(m.start) || !isISO(m.end)) return null;
+    var color = Math.abs(parseInt(m.color, 10) || 0) % NCOLORS;
+    return {
+      id: m.id,
+      name: str(m.name, 80) || "Dori",
+      strength: str(m.strength, 40),
+      qty: str(m.qty, 40),
+      how: str(m.how, 80),
+      form: FORMS.hasOwnProperty(m.form) ? m.form : "tablet",
+      color: color,
+      times: times,
+      start: m.start,
+      end: m.end < m.start ? m.start : m.end,
+      photo: (typeof m.photo === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(m.photo)) ? m.photo : null,
+      stoppedOn: isISO(m.stoppedOn) ? m.stoppedOn : null
+    };
+  }
+  function cleanMark(k, v){
+    var p = k.split("|");
+    if (p.length !== 3 || !isISO(p[0]) || !/^[A-Za-z0-9_-]{1,40}$/.test(p[1]) || !isTime(p[2])) return null;
+    if (!v || (v.s !== "taken" && v.s !== "missed")) return null;
+    return {
+      s: v.s,
+      at: (typeof v.at === "number" && isFinite(v.at)) ? v.at : null,
+      name: str(v.name, 80), strength: str(v.strength, 40), qty: str(v.qty, 40),
+      color: Math.abs(parseInt(v.color, 10) || 0) % NCOLORS,
+      form: FORMS.hasOwnProperty(v.form) ? v.form : "tablet"
+    };
+  }
+  function deriveCourse(meds){
+    if (!meds.length) { var t = todayISO(); return {start: t, end: addDays(t, 27)}; }
+    var s = meds[0].start, e = meds[0].end;
+    meds.forEach(function(m){ if (m.start < s) s = m.start; if (m.end > e) e = m.end; });
+    return {start: s, end: e};
+  }
+  function cleanState(o){
+    if (!o || typeof o !== "object") return null;
+    var seen = {};
+    var meds = (Array.isArray(o.meds) ? o.meds : []).map(cleanMed).filter(function(m){
+      if (!m || seen[m.id]) return false; seen[m.id] = 1; return true;
+    });
+    var marks = {};
+    if (o.marks && typeof o.marks === "object") Object.keys(o.marks).forEach(function(k){ var v = cleanMark(k, o.marks[k]); if (v) marks[k] = v; });
+    var c = o.course || {};
+    var course = (isISO(c.start) && isISO(c.end) && c.end >= c.start) ? {start: c.start, end: c.end} : deriveCourse(meds);
+    return {v: 2, course: course, meds: meds, marks: marks};
+  }
+  function load(){
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) { var s = cleanState(JSON.parse(raw)); if (s) return s; }
+    } catch (e) {}
+    return seed();
+  }
+  var saveFailed = false;
+  function save(){
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); saveFailed = false; }
+    catch (e) { if (!saveFailed) toast("Saqlab bo‘lmadi. Telefon xotirasini tekshiring."); saveFailed = true; }
+  }
+  var persistAsked = false;
+  function askPersist(){
+    if (persistAsked) return; persistAsked = true;
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  }
+
+  var state = load();
+  var ui = {tab: "today", viewDate: todayISO(), follow: true, histFilter: "all", histMed: "", histDays: 30};
+  function saveUi(){ try { localStorage.setItem(UI_KEY, JSON.stringify({tipClosed: tipClosed})); } catch (e) {} }
+  var tipClosed = false;
+  try { tipClosed = !!JSON.parse(localStorage.getItem(UI_KEY) || "{}").tipClosed; } catch (e) {}
+
+  // ================= Photos (IndexedDB) =================
+  var idb = null, photoURLs = {};
+  function openDB(){
+    return new Promise(function(resolve){
+      try {
+        var r = indexedDB.open("dori-photos", 1);
+        r.onupgradeneeded = function(){ r.result.createObjectStore("photos"); };
+        r.onsuccess = function(){ resolve(r.result); };
+        r.onerror = function(){ resolve(null); };
+      } catch (e) { resolve(null); }
+    });
+  }
+  function idbDo(mode, fn){
+    return new Promise(function(resolve, reject){
+      if (!idb) { reject(new Error("no-db")); return; }
+      var tx = idb.transaction("photos", mode), req = fn(tx.objectStore("photos"));
+      tx.oncomplete = function(){ resolve(req ? req.result : undefined); };
+      tx.onerror = tx.onabort = function(){ reject(tx.error || new Error("idb")); };
+    });
+  }
+  function putPhoto(id, blob){ return idbDo("readwrite", function(s){ return s.put(blob, id); }); }
+  function getPhoto(id){ return idbDo("readonly", function(s){ return s.get(id); }); }
+  function delPhoto(id){
+    if (photoURLs[id]) { URL.revokeObjectURL(photoURLs[id]); delete photoURLs[id]; }
+    return idbDo("readwrite", function(s){ return s.delete(id); }).catch(function(){});
+  }
+  function loadPhotos(){
+    return Promise.all(state.meds.filter(function(m){ return m.photo && !photoURLs[m.photo]; }).map(function(m){
+      return getPhoto(m.photo).then(function(b){ if (b) photoURLs[m.photo] = URL.createObjectURL(b); }).catch(function(){});
+    }));
+  }
+  function compressImage(file){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function(){
+        var max = 900, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function(b){ if (b) resolve(b); else reject(new Error("encode")); }, "image/jpeg", 0.82);
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+  function blobToDataURL(b){
+    return new Promise(function(resolve, reject){ var r = new FileReader(); r.onload = function(){ resolve(r.result); }; r.onerror = reject; r.readAsDataURL(b); });
+  }
+  function dataURLToBlob(u){
+    var m = /^data:(image\/[a-z+.-]+);base64,(.+)$/i.exec(u || "");
+    if (!m) return null;
+    var bin = atob(m[2]), arr = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], {type: m[1]});
+  }
+
+  // ================= Schedule logic =================
+  function findMed(id){ for (var i = 0; i < state.meds.length; i++) if (state.meds[i].id === id) return state.meds[i]; return null; }
+  function effEnd(m){
+    if (m.stoppedOn) { var e = addDays(m.stoppedOn, -1); return e < m.end ? e : m.end; }
+    return m.end;
+  }
+  function activeOn(m, iso){ return m.start <= iso && iso <= effEnd(m); }
+  function medStatus(m){
+    var t = todayISO();
+    if (effEnd(m) < t || effEnd(m) < m.start) return "archived";
+    if (m.start > t) return "upcoming";
+    return "active";
+  }
+  function dosesOn(iso){
+    var out = [];
+    state.meds.forEach(function(m){
+      if (!activeOn(m, iso)) return;
+      m.times.forEach(function(t){ out.push({med: m, time: t, key: iso + "|" + m.id + "|" + t}); });
+    });
+    out.sort(function(a, b){ return a.time < b.time ? -1 : a.time > b.time ? 1 : a.med.name.localeCompare(b.med.name); });
+    return out;
+  }
+  // taken | missed | late (past, unmarked) | now (in its time window) | soon (later today) | future
+  function doseStatus(d, rel){
+    var m = state.marks[d.key];
+    if (m) return m.s;
+    if (rel < 0) return "late";
+    if (rel > 0) return "future";
+    var diff = nowMin() - toMin(d.time);
+    if (diff > LATE_MIN) return "late";
+    if (diff >= -15) return "now";
+    return "soon";
+  }
+  function isDue(iso, time, today, nm){ return iso < today || (iso === today && nm >= toMin(time)); }
+  function courseStats(){
+    var c = state.course, t = todayISO(), nm = nowMin();
+    var r = {planned: 0, taken: 0, missed: 0, due: 0, takenDue: 0, overdue: 0};
+    for (var iso = c.start; iso <= c.end; iso = addDays(iso, 1)) {
+      dosesOn(iso).forEach(function(d){
+        r.planned++;
+        var m = state.marks[d.key];
+        if (m && m.s === "taken") r.taken++;
+        if (m && m.s === "missed") r.missed++;
+        if (isDue(iso, d.time, t, nm)) {
+          r.due++;
+          if (m && m.s === "taken") r.takenDue++;
+          if (!m && (iso < t || nm - toMin(d.time) > LATE_MIN)) r.overdue++;
+        }
+      });
+    }
+    return r;
+  }
+  function medStats(m){
+    var end = effEnd(m), planned = 0, taken = 0, missed = 0;
+    if (end >= m.start) planned = (diffDays(m.start, end) + 1) * m.times.length;
+    Object.keys(state.marks).forEach(function(k){
+      var p = k.split("|");
+      if (p[1] !== m.id) return;
+      if (state.marks[k].s === "taken") taken++; else missed++;
+    });
+    return {planned: planned, taken: taken, missed: missed};
+  }
+  function navBounds(){
+    var lo = state.course.start, hi = state.course.end, t = todayISO();
+    state.meds.forEach(function(m){ if (m.start < lo) lo = m.start; if (m.end > hi) hi = m.end; });
+    if (t < lo) lo = t;
+    if (t > hi) hi = t;
+    return {min: lo, max: hi};
+  }
+
+  // ================= Rendering: shared =================
+  function thumbHTML(src, size, zoomable){
+    // src: {photo, color, form}
+    var url = src.photo && photoURLs[src.photo];
+    var cls = "thumb" + (size ? " " + size : "");
+    if (url) {
+      return zoomable
+        ? '<button type="button" class="' + cls + '" data-zoom="' + src.photo + '" aria-label="Rasmni kattalashtirish"><img src="' + url + '" alt=""></button>'
+        : '<span class="' + cls + '"><img src="' + url + '" alt=""></span>';
+    }
+    return '<span class="' + cls + '" aria-hidden="true"><span class="pill ' + src.form + '" style="--med:var(--c' + src.color + ')"></span></span>';
+  }
+
+  function render(){
+    var active = document.activeElement;
+    var focusKey = active && active.getAttribute ? active.getAttribute("data-fk") : null;
+    ["today","history","meds","settings"].forEach(function(t){ $("view-" + t).hidden = ui.tab !== t; });
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(b){
+      if (b.getAttribute("data-tab") === ui.tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+    if (ui.tab === "today") renderToday();
+    else if (ui.tab === "history") renderHistory();
+    else if (ui.tab === "meds") renderMeds();
+    else renderSettings();
+    if (focusKey) {
+      var el = document.querySelector('[data-fk="' + focusKey + '"]');
+      if (el) el.focus({preventScroll: true});
+    }
+  }
+
+  // ================= Rendering: Bugun =================
+  function renderToday(){
+    var today = todayISO(), c = state.course;
+    var cLen = diffDays(c.start, c.end) + 1, cDay = diffDays(c.start, today) + 1;
+    var line = "Davolash: " + rangeText(c.start, c.end);
+    if (cDay < 1) line += " · " + (1 - cDay) + " kundan keyin boshlanadi";
+    else if (cDay > cLen) line += " · yakunlandi";
+    else line += " · " + cDay + "-kun / " + cLen;
+    $("courseLine").textContent = line;
+
+    var st = courseStats();
+    var denom = st.planned || 1;
+    $("barOk").style.width = (st.taken / denom * 100).toFixed(2) + "%";
+    $("barBad").style.width = (st.missed / denom * 100).toFixed(2) + "%";
+    var parts = ["<span><b>" + st.taken + "</b> / " + st.planned + " ichildi</span>", "<span><b>" + st.missed + "</b> ichilmadi</span>"];
+    if (st.overdue) parts.push("<span><b>" + st.overdue + "</b> belgilanmagan</span>");
+    parts.push("<span>bajarilish <b>" + (st.due ? Math.round(st.takenDue / st.due * 100) + "%" : "—") + "</b></span>");
+    $("courseText").innerHTML = parts.join("");
+
+    renderInstallTip();
+
+    var iso = ui.viewDate, rel = diffDays(today, iso);
+    var inCourse = iso >= c.start && iso <= c.end;
+    $("dayTitle").textContent = inCourse ? (diffDays(c.start, iso) + 1) + "-kun" : dm(iso);
+    $("dayDate").textContent = inCourse ? longDate(iso) : WEEKDAYS[weekday(iso)] + ", " + iso.slice(0, 4);
+    var b = navBounds();
+    $("prevDay").disabled = iso <= b.min;
+    $("nextDay").disabled = iso >= b.max;
+
+    var chip = $("dayChip");
+    chip.className = "chip" + (rel === 0 ? " today" : "");
+    chip.textContent = rel === 0 ? "Bugun" : rel === -1 ? "Kecha" : rel === 1 ? "Ertaga" : rel < 0 ? (-rel) + " kun oldin" : rel + " kundan keyin";
+    $("goToday").hidden = rel === 0;
+
+    var doses = dosesOn(iso);
+    var takenN = doses.filter(function(d){ var m = state.marks[d.key]; return m && m.s === "taken"; }).length;
+    $("dayCount").textContent = doses.length ? takenN + " / " + doses.length + " ichildi" : "";
+
+    var nextKey = null;
+    if (rel === 0) for (var j = 0; j < doses.length; j++) {
+      var s0 = doseStatus(doses[j], 0);
+      if (s0 === "now" || s0 === "soon") { nextKey = doses[j].key; break; }
+    }
+
+    $("doses").innerHTML = doses.map(function(d){
+      var m = d.med, st = doseStatus(d, rel), mark = state.marks[d.key];
+      var cls = "dose" + (st === "taken" ? " is-taken" : st === "missed" ? " is-missed" : "") + (d.key === nextKey ? " is-next" : "");
+      var line = "";
+      if (st === "taken") line = '<p class="dose-state">Ichildi' + (mark.at ? " · " + fmtAt(mark.at, iso) + " da belgilandi" : "") + "</p>";
+      else if (st === "missed") line = '<p class="dose-state">Ichilmadi' + (mark.at ? " · " + fmtAt(mark.at, iso) + " da belgilandi" : "") + "</p>";
+      else if (st === "late") line = '<span class="flag late">Vaqti o‘tdi, belgilanmagan</span>';
+      else if (d.key === nextKey && st === "now") line = '<span class="flag now">Ichish vaqti</span>';
+      else if (d.key === nextKey) line = '<span class="flag next">Navbatdagi · ' + untilText(toMin(d.time) - nowMin()) + "</span>";
+      var dis = rel > 0 ? " disabled" : "";
+      var label = esc(m.name + (m.strength ? " " + m.strength : "") + ", " + d.time);
+      return '<li class="' + cls + '">' +
+        '<div class="dose-top">' +
+          '<div class="dose-time">' + d.time + "</div>" +
+          thumbHTML(m, "", true) +
+          '<div class="dose-body">' +
+            '<p class="dose-name">' + esc(m.name) + (m.strength ? ' <span class="str">' + esc(m.strength) + "</span>" : "") + "</p>" +
+            '<p class="dose-how">' + esc(joinDot(m.qty, m.how)) + "</p>" + line +
+          "</div>" +
+          '<button type="button" class="icon-btn" data-edit="' + m.id + '" aria-label="' + esc(m.name) + ' — tahrirlash">' + ICON_EDIT + "</button>" +
+        "</div>" +
+        '<div class="dose-actions">' +
+          '<button type="button" class="act yes" data-mark="' + d.key + '" data-act="taken" data-fk="y' + d.key + '" aria-pressed="' + (mark && mark.s === "taken" ? "true" : "false") + '" aria-label="' + label + ': ichdim"' + dis + ">" + ICON_YES + "Ichdim</button>" +
+          '<button type="button" class="act no" data-mark="' + d.key + '" data-act="missed" data-fk="n' + d.key + '" aria-pressed="' + (mark && mark.s === "missed" ? "true" : "false") + '" aria-label="' + label + ': ichmadim"' + dis + ">" + ICON_NO + "Ichmadim</button>" +
+        "</div>" +
+      "</li>";
+    }).join("");
+    $("dayEmpty").hidden = doses.length > 0;
+
+    var notes = [];
+    if (rel > 0 && doses.length) notes.push("Bu kun hali kelmagan. Belgilash shu kuni ochiladi.");
+    state.meds.forEach(function(m){
+      var e = effEnd(m);
+      if (e === iso && e >= m.start) notes.push(m.name + " — shu kuni oxirgi kun.");
+      if (addDays(e, 1) === iso && e >= m.start) notes.push(m.name + " kursi tugadi va arxivga o‘tdi.");
+      if (m.start === iso && m.start !== c.start) notes.push(m.name + " shu kundan boshlanadi.");
+    });
+    $("dayNote").hidden = notes.length === 0;
+    $("dayNote").textContent = notes.join(" ");
+
+    renderBlister();
+  }
+
+  function renderBlister(){
+    var c = state.course, t = todayISO(), nm = nowMin();
+    var len = Math.min(diffDays(c.start, c.end) + 1, 366);
+    var wd0 = weekday(c.start), head = "";
+    for (var w = 0; w < 7; w++) head += "<span>" + WD_SHORT[(wd0 + w) % 7] + "</span>";
+    $("weekhead").innerHTML = head;
+    var html = "";
+    for (var k = 1; k <= len; k++) {
+      var iso = addDays(c.start, k - 1), doses = dosesOn(iso);
+      var taken = 0, missed = 0, late = 0, dots = "";
+      doses.forEach(function(d, i){
+        var m = state.marks[d.key], cl = "";
+        if (m && m.s === "taken") { cl = "ok"; taken++; }
+        else if (m && m.s === "missed") { cl = "bad"; missed++; }
+        else if (iso < t || (iso === t && nm - toMin(d.time) > LATE_MIN)) { cl = "late"; late++; }
+        if (i < 9) dots += '<i class="' + cl + '"></i>';
+      });
+      var cls = "cell";
+      if (iso > t) cls += " future";
+      else if (doses.length && taken === doses.length) cls += " full";
+      else if (missed > 0) cls += " miss";
+      if (iso === t) cls += " is-today";
+      if (iso === ui.viewDate) cls += " is-sel";
+      var aria = k + "-kun, " + dm(iso) + ": " + doses.length + " dan " + taken + " ichildi" + (missed ? ", " + missed + " ichilmadi" : "") + (late ? ", " + late + " belgilanmagan" : "");
+      html += '<button type="button" class="' + cls + '" data-day="' + iso + '" data-fk="c' + iso + '" aria-label="' + aria + '">' +
+        '<span class="c-num">' + k + "</span>" +
+        '<span class="c-dots">' + dots + "</span>" +
+        '<span class="c-date">' + ddmm(iso) + "</span>" +
+      "</button>";
+    }
+    $("blister").innerHTML = html;
+  }
+
+  // ================= Install =================
+  var deferredPrompt = null;
+  function isStandalone(){ return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
+  function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
+  function renderInstallTip(){
+    var show = !isStandalone() && !tipClosed;
+    $("installTip").hidden = !show;
+    if (!show) return;
+    if (isIOS()) {
+      $("installTipText").innerHTML = "<b>Ilovani telefonga o‘rnating</b>Safari’da pastdagi “Ulashish” (□↑) tugmasini bosing va “На экран «Домой»” / “Add to Home Screen” ni tanlang.";
+    } else if (deferredPrompt) {
+      $("installTipText").innerHTML = '<b>Ilovani telefonga o‘rnating</b>Ekraningizda ikonka paydo bo‘ladi va internetsiz ham ishlaydi.<br><button class="btn primary" type="button" data-install>O‘rnatish</button>';
+    } else {
+      $("installTipText").innerHTML = "<b>Ilovani telefonga o‘rnating</b>Chrome’da ⋮ menyuni bosing va “Установить приложение” / “Install app” ni tanlang.";
+    }
+  }
+  function doInstall(){
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(function(){ deferredPrompt = null; render(); });
+  }
+  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); deferredPrompt = e; render(); });
+  window.addEventListener("appinstalled", function(){ deferredPrompt = null; tipClosed = true; saveUi(); render(); toast("Ilova o‘rnatildi"); });
+
+  // ================= Rendering: Tarix =================
+  function renderHistory(){
+    var keys = Object.keys(state.marks);
+    // Medicine filter options: every medicine that has marks, current name if it still exists.
+    var names = {};
+    keys.forEach(function(k){ var id = k.split("|")[1]; var cur = findMed(id); names[id] = cur ? cur.name : (state.marks[k].name || "Dori"); });
+    var opts = '<option value="">Barcha dorilar</option>' + Object.keys(names).sort(function(a, b){ return names[a].localeCompare(names[b]); }).map(function(id){
+      return '<option value="' + id + '"' + (ui.histMed === id ? " selected" : "") + ">" + esc(names[id]) + "</option>";
+    }).join("");
+    if (ui.histMed && !names[ui.histMed]) ui.histMed = "";
+    $("histMed").innerHTML = opts;
+    $("histMed").value = ui.histMed;
+    Array.prototype.forEach.call(document.querySelectorAll("#histSeg button"), function(bt){ bt.setAttribute("aria-pressed", bt.getAttribute("data-hf") === ui.histFilter ? "true" : "false"); });
+
+    var rows = keys.map(function(k){ var p = k.split("|"); return {key: k, date: p[0], medId: p[1], time: p[2], m: state.marks[k]}; })
+      .filter(function(r){ return (!ui.histMed || r.medId === ui.histMed) && (ui.histFilter === "all" || r.m.s === ui.histFilter); });
+
+    var taken = 0, missed = 0;
+    keys.forEach(function(k){ if (ui.histMed && k.split("|")[1] !== ui.histMed) return; if (state.marks[k].s === "taken") taken++; else missed++; });
+    $("histSum").innerHTML = (taken + missed)
+      ? "<span><b>" + taken + "</b> ichildi</span><span><b>" + missed + "</b> ichilmadi</span>" + (taken + missed ? "<span>bajarilish <b>" + Math.round(taken / (taken + missed) * 100) + "%</b></span>" : "")
+      : "";
+
+    var byDate = {};
+    rows.forEach(function(r){ (byDate[r.date] = byDate[r.date] || []).push(r); });
+    var dates = Object.keys(byDate).sort().reverse();
+    var shown = dates.slice(0, ui.histDays);
+    $("histEmpty").hidden = rows.length > 0;
+    if (!rows.length && keys.length) $("histEmpty").querySelector("p").textContent = "Tanlangan saralash bo‘yicha yozuv topilmadi.";
+    else $("histEmpty").querySelector("p").textContent = "Hali belgilangan qabul yo‘q. “Bugun” bo‘limida dorini “Ichdim” deb belgilasangiz, u shu yerda paydo bo‘ladi.";
+    $("histMore").hidden = dates.length <= ui.histDays;
+
+    $("histList").innerHTML = shown.map(function(date){
+      var list = byDate[date].sort(function(a, b){ return a.time < b.time ? -1 : a.time > b.time ? 1 : 0; });
+      var t = list.filter(function(r){ return r.m.s === "taken"; }).length, mi = list.length - t;
+      return '<section class="h-day">' +
+        '<div class="h-day-h"><b>' + longDate(date) + "</b><span>" + joinDot(t ? t + " ichildi" : "", mi ? mi + " ichilmadi" : "") + "</span></div>" +
+        '<ul class="h-list">' + list.map(function(r){
+          var cur = findMed(r.medId);
+          var src = {photo: cur ? cur.photo : null, color: cur ? cur.color : r.m.color, form: cur ? cur.form : r.m.form};
+          var name = r.m.name || (cur ? cur.name : "Dori");
+          return '<li><button type="button" class="h-row" data-goto-day="' + date + '">' +
+            '<span class="h-time">' + r.time + "</span>" +
+            thumbHTML(src, "sm", false) +
+            '<span class="h-main"><b>' + esc(name) + "</b>" + (r.m.strength ? " " + esc(r.m.strength) : "") +
+              (r.m.at ? "<small>" + fmtAt(r.m.at, date) + " da belgilangan</small>" : "") + "</span>" +
+            '<span class="h-state ' + r.m.s + '">' + (r.m.s === "taken" ? "Ichildi" : "Ichilmadi") + "</span>" +
+          "</button></li>";
+        }).join("") + "</ul>" +
+      "</section>";
+    }).join("");
+  }
+
+  // ================= Rendering: Dorilar =================
+  function medCard(m, status){
+    var st = medStats(m), end = effEnd(m), t = todayISO(), range;
+    if (status === "active") {
+      var left = diffDays(t, end);
+      range = rangeText(m.start, m.end) + " · <b>" + (left === 0 ? "bugun oxirgi kun" : left + " kun qoldi") + "</b>";
+    } else if (status === "upcoming") {
+      range = rangeText(m.start, m.end) + " · <b>" + diffDays(t, m.start) + " kundan keyin boshlanadi</b>";
+    } else {
+      range = (m.stoppedOn ? "To‘xtatildi: " + dmy(m.stoppedOn) : "Tugadi: " + dmy(m.end)) + " · <b>" + st.taken + " / " + st.planned + " ichildi</b>";
+    }
+    return '<li><button type="button" class="med-card' + (status === "archived" ? " is-archived" : "") + '" data-edit="' + m.id + '">' +
+      thumbHTML(m, "lg", false) +
+      '<span class="med-info">' +
+        "<b>" + esc(m.name) + (m.strength ? ' <span class="str">' + esc(m.strength) + "</span>" : "") + "</b>" +
+        '<span class="muted">' + esc(joinDot(m.qty, m.how)) + "</span>" +
+        '<span class="med-times">' + m.times.map(function(x){ return "<i>" + x + "</i>"; }).join("") + "</span>" +
+        '<span class="med-range">' + range + "</span>" +
+      "</span>" +
+      '<span class="chev" aria-hidden="true">›</span>' +
+    "</button></li>";
+  }
+  function renderMeds(){
+    var groups = {active: [], upcoming: [], archived: []};
+    state.meds.forEach(function(m){ groups[medStatus(m)].push(m); });
+    groups.active.sort(function(a, b){ return a.times[0] < b.times[0] ? -1 : 1; });
+    groups.upcoming.sort(function(a, b){ return a.start < b.start ? -1 : 1; });
+    groups.archived.sort(function(a, b){ return effEnd(a) > effEnd(b) ? -1 : 1; });
+    $("medsActive").innerHTML = groups.active.map(function(m){ return medCard(m, "active"); }).join("");
+    $("medsUpcoming").innerHTML = groups.upcoming.map(function(m){ return medCard(m, "upcoming"); }).join("");
+    $("medsArchived").innerHTML = groups.archived.map(function(m){ return medCard(m, "archived"); }).join("");
+    $("cntActive").textContent = groups.active.length ? groups.active.length + " ta" : "";
+    $("cntUpcoming").textContent = groups.upcoming.length ? groups.upcoming.length + " ta" : "";
+    $("cntArchived").textContent = groups.archived.length ? groups.archived.length + " ta" : "hozircha bo‘sh";
+    $("noActive").hidden = groups.active.length > 0;
+    $("grpUpcoming").hidden = groups.upcoming.length === 0;
+  }
+
+  // ================= Rendering: Sozlamalar =================
+  function renderSettings(){
+    var c = state.course;
+    if ($("courseStart").value !== c.start) $("courseStart").value = c.start;
+    if ($("courseEnd").value !== c.end) $("courseEnd").value = c.end;
+    $("courseInfo").textContent = "Jami " + (diffDays(c.start, c.end) + 1) + " kun: " + rangeText(c.start, c.end) + ".";
+    var sa = isStandalone();
+    $("installBtn").hidden = sa || !deferredPrompt;
+    $("installedNote").hidden = !sa;
+  }
+
+  // ================= Actions =================
+  function setMark(key, act){
+    var p = key.split("|"), iso = p[0], med = findMed(p[1]);
+    if (!med || iso > todayISO()) return;
+    var cur = state.marks[key];
+    if (cur && cur.s === act) delete state.marks[key];
+    else state.marks[key] = {s: act, at: Date.now(), name: med.name, strength: med.strength, qty: med.qty, color: med.color, form: med.form};
+    save(); askPersist();
+    render();
+  }
+  function goToDate(iso, scroll){
+    var b = navBounds();
+    if (iso < b.min) iso = b.min;
+    if (iso > b.max) iso = b.max;
+    ui.viewDate = iso;
+    ui.follow = iso === todayISO();
+    if (ui.tab !== "today") { ui.tab = "today"; saveUi(); }
+    render();
+    if (scroll) {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      document.querySelector(".day").scrollIntoView({behavior: reduce ? "auto" : "smooth", block: "start"});
+    }
+  }
+  function switchTab(t){
+    if (t === ui.tab) { window.scrollTo(0, 0); return; }
+    ui.tab = t; saveUi(); render(); window.scrollTo(0, 0);
+  }
+
+  var toastTimer = null;
+  function toast(msg){
+    var el = $("toast");
+    el.textContent = msg; el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.hidden = true; }, 2400);
+  }
+
+  // Offer a generated file: the share sheet on phones ("Save to Files", Telegram…), a download elsewhere.
+  function offerFile(name, mime, content){
+    var blob = new Blob([content], {type: mime});
+    var file = null;
+    try { file = new File([blob], name, {type: mime}); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({files: [file]})) {
+      return navigator.share({files: [file], title: name}).then(function(){ return true; }, function(err){
+        if (err && err.name === "AbortError") return false;
+        return downloadBlob(name, blob);
+      });
+    }
+    return Promise.resolve(downloadBlob(name, blob));
+  }
+  function downloadBlob(name, blob){
+    var url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+    return true;
+  }
+
+  function exportCSV(){
+    var rows = [["Sana","Vaqt","Dori","Dozasi","Bir martada","Holat","Belgilangan vaqt"]];
+    Object.keys(state.marks).sort().forEach(function(k){
+      var p = k.split("|"), m = state.marks[k], cur = findMed(p[1]);
+      var at = m.at ? new Date(m.at) : null;
+      rows.push([ddmm(p[0]) + "." + p[0].slice(0, 4), p[2], m.name || (cur ? cur.name : ""), m.strength, m.qty,
+        m.s === "taken" ? "Ichildi" : "Ichilmadi",
+        at ? pad(at.getDate()) + "." + pad(at.getMonth() + 1) + "." + at.getFullYear() + " " + pad(at.getHours()) + ":" + pad(at.getMinutes()) : ""]);
+    });
+    if (rows.length === 1) { toast("Tarix hali bo‘sh"); return; }
+    var csv = "﻿" + rows.map(function(r){ return r.map(function(v){ v = String(v == null ? "" : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(";"); }).join("\r\n");
+    offerFile("dori-tarixi-" + todayISO() + ".csv", "text/csv", csv).then(function(ok){ if (ok) toast("Tarix fayli tayyor"); });
+  }
+
+  function exportBackup(){
+    var photos = {};
+    var jobs = state.meds.filter(function(m){ return m.photo; }).map(function(m){
+      return getPhoto(m.photo).then(function(b){ return b ? blobToDataURL(b) : null; }).then(function(u){ if (u) photos[m.photo] = u; }).catch(function(){});
+    });
+    Promise.all(jobs).then(function(){
+      var data = {app: "dori-jadvali", version: 2, exportedAt: new Date().toISOString(), course: state.course, meds: state.meds, marks: state.marks, photos: photos};
+      return offerFile("dori-zaxira-" + todayISO() + ".json", "application/json", JSON.stringify(data));
+    }).then(function(ok){ if (ok) toast("Zaxira fayl tayyor"); });
+  }
+
+  var pendingImport = null;
+  function readImport(file){
+    var r = new FileReader();
+    r.onload = function(){
+      var o = null;
+      try { o = JSON.parse(r.result); } catch (e) {}
+      var s = o && o.app === "dori-jadvali" ? cleanState(o) : null;
+      if (!s) { toast("Bu fayl dori jadvali zaxirasi emas"); return; }
+      pendingImport = {state: s, photos: (o.photos && typeof o.photos === "object") ? o.photos : {}};
+      $("importConfirmText").textContent = "Zaxirada " + s.meds.length + " ta dori va " + Object.keys(s.marks).length + " ta belgi bor. Hozirgi ma’lumotlar shu bilan almashtiriladi.";
+      $("importConfirm").hidden = false;
+    };
+    r.onerror = function(){ toast("Faylni o‘qib bo‘lmadi"); };
+    r.readAsText(file);
+  }
+  function applyImport(){
+    if (!pendingImport) return;
+    var imp = pendingImport; pendingImport = null;
+    $("importConfirm").hidden = true;
+    var old = state.meds.map(function(m){ return m.photo; }).filter(Boolean);
+    var jobs = imp.state.meds.map(function(m){
+      if (!m.photo) return Promise.resolve();
+      var blob = dataURLToBlob(imp.photos[m.photo]);
+      if (!blob) { m.photo = null; return Promise.resolve(); }
+      return putPhoto(m.photo, blob).then(function(){
+        if (photoURLs[m.photo]) URL.revokeObjectURL(photoURLs[m.photo]);
+        photoURLs[m.photo] = URL.createObjectURL(blob);
+      }).catch(function(){ m.photo = null; });
+    });
+    Promise.all(jobs).then(function(){
+      var keep = {}; imp.state.meds.forEach(function(m){ if (m.photo) keep[m.photo] = 1; });
+      old.forEach(function(id){ if (!keep[id]) delPhoto(id); });
+      state = imp.state;
+      ui.viewDate = todayISO(); ui.follow = true;
+      save(); render(); toast("Zaxira tiklandi");
+    });
+  }
+
+  function setCourse(){
+    var s = $("courseStart").value, e = $("courseEnd").value, err = $("courseErr");
+    if (!isISO(s) || !isISO(e)) { err.textContent = "Ikkala sanani ham kiriting."; err.hidden = false; return; }
+    if (e < s) { err.textContent = "Tugash sanasi boshlanish sanasidan oldin bo‘lishi mumkin emas."; err.hidden = false; return; }
+    err.hidden = true;
+    if (s === state.course.start && e === state.course.end) return;
+    state.course = {start: s, end: e};
+    save(); render(); toast("Davolash muddati saqlandi");
+  }
+
+  // ================= Medicine editor =================
+  var draft = null;   // {id|null, form, color, times[], photoBlob, photoURL, removePhoto}
+  function openEditor(med){
+    var t = todayISO();
+    var c = state.course;
+    var defEnd = c.end >= t ? c.end : addDays(t, 6);
+    draft = {
+      id: med ? med.id : null,
+      form: med ? med.form : "tablet",
+      color: med ? med.color : nextColor(),
+      times: med ? med.times.slice() : ["08:00"],
+      photoBlob: null, photoURL: null, removePhoto: false
+    };
+    $("sheetTitle").textContent = med ? "Dorini tahrirlash" : "Yangi dori";
+    $("fName").value = med ? med.name : "";
+    $("fStrength").value = med ? med.strength : "";
+    $("fQty").value = med ? med.qty : FORMS.tablet;
+    $("fHow").value = med ? med.how : "";
+    $("fStart").value = med ? med.start : t;
+    $("fEnd").value = med ? med.end : defEnd;
+    syncDays();
+    $("formErr").hidden = true;
+    $("deleteConfirm").hidden = true;
+    $("editActions").hidden = !med;
+    var status = med ? medStatus(med) : null;
+    $("archiveBtn").hidden = !med || status === "archived";
+    $("restoreBtn").hidden = !med || !med.stoppedOn;
+    var note = $("medStatusNote");
+    if (med && status === "archived") {
+      note.hidden = false;
+      note.textContent = med.stoppedOn
+        ? "Bu dori arxivda. Qayta boshlash uchun “Arxivdan qaytarish” ni bosing."
+        : "Bu dori arxivda: muddati " + dmy(med.end) + " kuni tugagan. Davom ettirish uchun tugash sanasini o‘zgartiring.";
+    } else note.hidden = true;
+    $("fTimes").innerHTML = "";
+    renderEditorBits();
+    $("sheet").hidden = false;
+    document.body.classList.add("locked");
+    $("medForm").scrollTop = 0;
+    try { history.pushState({sheet: 1}, ""); } catch (e) {}
+    setTimeout(function(){ if (!med) $("fName").focus(); }, 60);
+  }
+  function closeEditor(fromPop){
+    if ($("sheet").hidden) return;
+    $("sheet").hidden = true;
+    document.body.classList.remove("locked");
+    if (draft && draft.photoURL) URL.revokeObjectURL(draft.photoURL);
+    draft = null;
+    if (!fromPop && history.state && history.state.sheet) { try { history.back(); } catch (e) {} }
+  }
+  window.addEventListener("popstate", function(){ closeEditor(true); if (!$("lightbox").hidden) $("lightbox").hidden = true; });
+
+  function nextColor(){
+    var used = {}; state.meds.forEach(function(m){ if (medStatus(m) !== "archived") used[m.color] = 1; });
+    for (var i = 0; i < NCOLORS; i++) if (!used[i]) return i;
+    return state.meds.length % NCOLORS;
+  }
+  function currentPhotoURL(){
+    if (!draft) return null;
+    if (draft.photoURL) return draft.photoURL;
+    if (draft.removePhoto || !draft.id) return null;
+    var m = findMed(draft.id);
+    return m && m.photo ? photoURLs[m.photo] || null : null;
+  }
+  function renderEditorBits(){
+    readTimes();
+    var url = currentPhotoURL();
+    $("photoImg").hidden = !url;
+    if (url) $("photoImg").src = url; else $("photoImg").removeAttribute("src");
+    $("photoEmpty").hidden = !!url;
+    $("photoRemove").hidden = !url;
+    Array.prototype.forEach.call(document.querySelectorAll("#fForm button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-form") === draft.form ? "true" : "false"); });
+    var sw = "";
+    for (var i = 0; i < NCOLORS; i++) sw += '<button type="button" class="swatch" data-color="' + i + '" style="--sw:var(--c' + i + ')" aria-label="Rang ' + (i + 1) + '" aria-pressed="' + (i === draft.color ? "true" : "false") + '"></button>';
+    $("fColors").innerHTML = sw;
+    renderTimes();
+  }
+  function renderTimes(){
+    $("fTimes").innerHTML = draft.times.map(function(t, i){
+      return '<div class="time-row">' +
+        '<label class="sr" for="fTime' + i + '">' + (i + 1) + "-vaqt</label>" +
+        '<input class="input" type="time" id="fTime' + i + '" data-ti="' + i + '" value="' + (isTime(t) ? t : "") + '">' +
+        '<button type="button" class="icon-btn" data-rm-time="' + i + '" aria-label="' + (i + 1) + '-vaqtni olib tashlash"' + (draft.times.length < 2 ? " disabled" : "") + ">" + ICON_X + "</button>" +
+      "</div>";
+    }).join("");
+  }
+  function readTimes(){
+    Array.prototype.forEach.call(document.querySelectorAll("#fTimes input"), function(inp){
+      draft.times[+inp.getAttribute("data-ti")] = inp.value;
+    });
+  }
+  function syncDays(){
+    var s = $("fStart").value, e = $("fEnd").value;
+    $("fDays").value = (isISO(s) && isISO(e) && e >= s) ? diffDays(s, e) + 1 : "";
+  }
+  function daysChanged(){
+    var s = $("fStart").value, n = parseInt($("fDays").value, 10);
+    if (isISO(s) && n >= 1 && n <= 3650) $("fEnd").value = addDays(s, n - 1);
+  }
+
+  function migrateTimes(medId, oldTimes, newTimes){
+    // Keep today's and later marks attached when a dose time is edited (matched by position).
+    var from = todayISO();
+    Object.keys(state.marks).forEach(function(k){
+      var p = k.split("|");
+      if (p[1] !== medId || p[0] < from || newTimes.indexOf(p[2]) >= 0) return;
+      var i = oldTimes.indexOf(p[2]), nt = newTimes[i];
+      if (i < 0 || !nt) return;
+      var nk = p[0] + "|" + medId + "|" + nt;
+      if (!state.marks[nk]) state.marks[nk] = state.marks[k];
+      delete state.marks[k];
+    });
+  }
+
+  function saveEditor(ev){
+    if (ev) ev.preventDefault();
+    if (!draft) return;
+    readTimes();
+    var err = $("formErr");
+    function fail(msg){ err.textContent = msg; err.hidden = false; err.scrollIntoView({block: "center"}); }
+    var name = str($("fName").value, 80);
+    var times = uniqSorted(draft.times.filter(isTime));
+    var s = $("fStart").value, e = $("fEnd").value;
+    if (!name) return fail("Dori nomini kiriting.");
+    if (!times.length) return fail("Kamida bitta ichish vaqtini kiriting.");
+    if (!isISO(s) || !isISO(e)) return fail("Boshlanish va tugash sanasini kiriting.");
+    if (e < s) return fail("Tugash sanasi boshlanish sanasidan oldin bo‘lishi mumkin emas.");
+    err.hidden = true;
+
+    var existing = draft.id ? findMed(draft.id) : null;
+    var med = existing || {id: newId("m"), photo: null, stoppedOn: null};
+    var oldTimes = existing ? existing.times.slice() : [];
+    med.name = name;
+    med.strength = str($("fStrength").value, 40);
+    med.qty = str($("fQty").value, 40);
+    med.how = str($("fHow").value, 80);
+    med.form = draft.form;
+    med.color = draft.color;
+    med.times = times;
+    med.start = s;
+    med.end = e;
+    if (med.stoppedOn && e >= todayISO() && existing && e !== existing.end) med.stoppedOn = null;
+
+    var photoJob = Promise.resolve();
+    var d = draft;
+    if (d.photoBlob) {
+      var oldPhoto = med.photo, pid = newId("p");
+      photoJob = putPhoto(pid, d.photoBlob).then(function(){
+        photoURLs[pid] = URL.createObjectURL(d.photoBlob);
+        med.photo = pid;
+        if (oldPhoto) delPhoto(oldPhoto);
+      }).catch(function(){ toast("Rasmni saqlab bo‘lmadi"); });
+    } else if (d.removePhoto && med.photo) {
+      delPhoto(med.photo); med.photo = null;
+    }
+    photoJob.then(function(){
+      if (existing) migrateTimes(med.id, oldTimes, times);
+      else state.meds.push(med);
+      save(); askPersist();
+      closeEditor(false);
+      render();
+      toast(existing ? "O‘zgarishlar saqlandi" : med.name + " qo‘shildi");
+    });
+  }
+
+  function archiveNow(){
+    var med = draft && findMed(draft.id);
+    if (!med) return;
+    med.stoppedOn = todayISO();
+    save(); closeEditor(false); render(); toast(med.name + " arxivga o‘tkazildi");
+  }
+  function restoreMed(){
+    var med = draft && findMed(draft.id);
+    if (!med) return;
+    med.stoppedOn = null;
+    save(); closeEditor(false); render();
+    toast(medStatus(med) === "archived" ? "Tugash sanasi o‘tgan: davom ettirish uchun uni o‘zgartiring" : med.name + " qayta faol");
+  }
+  function deleteMed(){
+    var med = draft && findMed(draft.id);
+    if (!med) return;
+    if (med.photo) delPhoto(med.photo);
+    state.meds = state.meds.filter(function(m){ return m.id !== med.id; });
+    save(); closeEditor(false); render(); toast(med.name + " o‘chirildi");
+  }
+
+  function onPhotoChosen(input){
+    var f = input.files && input.files[0];
+    input.value = "";
+    if (!f || !draft) return;
+    compressImage(f).then(function(blob){
+      if (!draft) return;
+      if (draft.photoURL) URL.revokeObjectURL(draft.photoURL);
+      draft.photoBlob = blob; draft.photoURL = URL.createObjectURL(blob); draft.removePhoto = false;
+      renderEditorBits();
+    }).catch(function(){ toast("Rasmni ochib bo‘lmadi. Boshqa rasm tanlang."); });
+  }
+
+  function zoom(url){
+    if (!url) return;
+    $("lightboxImg").src = url;
+    $("lightbox").hidden = false;
+  }
+
+  // ================= Events =================
+  document.addEventListener("click", function(e){
+    var t = e.target;
+    var el;
+    if ((el = t.closest("[data-tab]"))) { switchTab(el.getAttribute("data-tab")); return; }
+    if ((el = t.closest("[data-mark]"))) { if (!el.disabled) setMark(el.getAttribute("data-mark"), el.getAttribute("data-act")); return; }
+    if ((el = t.closest("[data-zoom]"))) { zoom(photoURLs[el.getAttribute("data-zoom")]); return; }
+    if ((el = t.closest("[data-edit]"))) { var m = findMed(el.getAttribute("data-edit")); if (m) openEditor(m); return; }
+    if ((el = t.closest("[data-new-med]"))) { openEditor(null); return; }
+    if ((el = t.closest("[data-day]"))) { goToDate(el.getAttribute("data-day"), true); return; }
+    if ((el = t.closest("[data-goto-day]"))) { goToDate(el.getAttribute("data-goto-day"), false); window.scrollTo(0, 0); return; }
+    if ((el = t.closest("[data-install]"))) { doInstall(); return; }
+    if ((el = t.closest("[data-hf]"))) { ui.histFilter = el.getAttribute("data-hf"); ui.histDays = 30; render(); return; }
+    if ((el = t.closest("[data-form]"))) {
+      if (!draft) return;
+      var prevQty = FORMS[draft.form];
+      draft.form = el.getAttribute("data-form");
+      if (!$("fQty").value || $("fQty").value === prevQty) $("fQty").value = FORMS[draft.form];
+      renderEditorBits(); return;
+    }
+    if ((el = t.closest("[data-color]"))) { if (draft) { draft.color = +el.getAttribute("data-color"); renderEditorBits(); } return; }
+    if ((el = t.closest("[data-rm-time]"))) {
+      if (!draft || draft.times.length < 2) return;
+      readTimes(); draft.times.splice(+el.getAttribute("data-rm-time"), 1); renderTimes(); return;
+    }
+    if ((el = t.closest("[data-how]"))) {
+      var how = el.getAttribute("data-how"), cur = $("fHow").value.trim();
+      $("fHow").value = cur && cur.indexOf(how) < 0 ? cur + ", " + how : how;
+      return;
+    }
+  });
+
+  $("prevDay").addEventListener("click", function(){ goToDate(addDays(ui.viewDate, -1), false); });
+  $("nextDay").addEventListener("click", function(){ goToDate(addDays(ui.viewDate, 1), false); });
+  $("goToday").addEventListener("click", function(){ goToDate(todayISO(), false); });
+  $("installTipClose").addEventListener("click", function(){ tipClosed = true; saveUi(); render(); });
+  $("installBtn").addEventListener("click", doInstall);
+
+  $("histMed").addEventListener("change", function(e){ ui.histMed = e.target.value; ui.histDays = 30; render(); });
+  $("histMore").addEventListener("click", function(){ ui.histDays += 30; render(); });
+  $("histCsv").addEventListener("click", exportCSV);
+
+  $("courseStart").addEventListener("change", setCourse);
+  $("courseEnd").addEventListener("change", setCourse);
+  $("exportBtn").addEventListener("click", exportBackup);
+  $("importInput").addEventListener("change", function(e){ var f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) readImport(f); });
+  $("importYes").addEventListener("click", applyImport);
+  $("importNo").addEventListener("click", function(){ pendingImport = null; $("importConfirm").hidden = true; });
+
+  $("sheetClose").addEventListener("click", function(){ closeEditor(false); });
+  $("sheet").addEventListener("click", function(e){ if (e.target === $("sheet")) closeEditor(false); });
+  $("medForm").addEventListener("submit", saveEditor);
+  $("photoCamera").addEventListener("change", function(e){ onPhotoChosen(e.target); });
+  $("photoPick").addEventListener("change", function(e){ onPhotoChosen(e.target); });
+  $("photoRemove").addEventListener("click", function(){
+    if (!draft) return;
+    if (draft.photoURL) URL.revokeObjectURL(draft.photoURL);
+    draft.photoBlob = null; draft.photoURL = null; draft.removePhoto = true;
+    renderEditorBits();
+  });
+  $("photoBox").addEventListener("click", function(){ zoom(currentPhotoURL()); });
+  $("addTime").addEventListener("click", function(){
+    readTimes();
+    var last = draft.times.filter(isTime).sort().pop();
+    var next = last ? pad((+last.slice(0, 2) + 4) % 24) + ":" + last.slice(3, 5) : "08:00";
+    draft.times.push(next); renderTimes();
+    var inputs = document.querySelectorAll("#fTimes input");
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+  $("fStart").addEventListener("change", function(){ var n = parseInt($("fDays").value, 10); if (n >= 1) daysChanged(); else syncDays(); });
+  $("fEnd").addEventListener("change", syncDays);
+  $("fDays").addEventListener("input", daysChanged);
+  $("archiveBtn").addEventListener("click", archiveNow);
+  $("restoreBtn").addEventListener("click", restoreMed);
+  $("deleteBtn").addEventListener("click", function(){ $("deleteConfirm").hidden = false; $("deleteConfirm").scrollIntoView({block: "center"}); });
+  $("deleteNo").addEventListener("click", function(){ $("deleteConfirm").hidden = true; });
+  $("deleteYes").addEventListener("click", deleteMed);
+  $("lightbox").addEventListener("click", function(){ $("lightbox").hidden = true; });
+  document.addEventListener("keydown", function(e){
+    if (e.key !== "Escape") return;
+    if (!$("lightbox").hidden) $("lightbox").hidden = true;
+    else closeEditor(false);
+  });
+
+  $("howChips").innerHTML = HOW_CHIPS.map(function(h){ return '<button type="button" class="chipbtn" data-how="' + h + '">' + h + "</button>"; }).join("");
+
+  // Keep "today", overdue flags and countdowns current.
+  var lastToday = todayISO();
+  function tick(){
+    var t = todayISO();
+    if (t !== lastToday) { lastToday = t; if (ui.follow) ui.viewDate = t; }
+    if ($("sheet").hidden) render();
+  }
+  setInterval(tick, 30000);
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) tick(); });
+
+  // Pick up changes made in another tab of the same app.
+  window.addEventListener("storage", function(e){
+    if (e.key !== LS_KEY) return;
+    state = load();
+    loadPhotos().then(render);
+  });
+
+  // ================= Boot =================
+  render();
+  openDB().then(function(db){ idb = db; return loadPhotos(); }).then(render);
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", function(){ navigator.serviceWorker.register("./sw.js").catch(function(){}); });
+  }
+})();
+</script>
+</body>
+</html>
