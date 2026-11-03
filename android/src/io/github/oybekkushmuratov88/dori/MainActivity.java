@@ -4,7 +4,11 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.app.AlarmManager;
+import android.app.NotificationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -29,6 +33,7 @@ public class MainActivity extends Activity {
     static final String APP_HOST = "oybekkushmuratov88-ai.github.io";
     static final String APP_PATH = "/dori-jadvali/";
     static final int REQ_FILE = 41;
+    static final int REQ_NOTIF = 42;
 
     private WebView web;
     private ValueCallback<Uri[]> fileCallback;
@@ -154,6 +159,38 @@ public class MainActivity extends Activity {
         callback.onReceiveValue(result);
     }
 
+    /** Ask for notification permission (Android 13+); older versions are granted at install. */
+    void askNotifPermission() {
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {"android.permission.POST_NOTIFICATIONS"}, REQ_NOTIF);
+        } else {
+            reportReminderState();
+        }
+    }
+
+    boolean notificationsAllowed() {
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            return nm != null && nm.areNotificationsEnabled();
+        } catch (Exception e) { return true; }
+    }
+
+    void reportReminderState() {
+        final String state = notificationsAllowed() ? "granted" : "denied";
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (web != null) web.evaluateJavascript("window.__onReminderState && window.__onReminderState('" + state + "')", null);
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == REQ_NOTIF) reportReminderState();
+    }
+
     @Override
     public void onBackPressed() {
         if (web != null && web.canGoBack()) web.goBack();
@@ -195,6 +232,37 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public int version() {
             return 1;
+        }
+
+        /** The page sets the whole reminder schedule: a JSON array of {at,title,body,nid}. */
+        @JavascriptInterface
+        public void setReminders(final String json) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() { Reminders.schedule(MainActivity.this, json); }
+            });
+        }
+
+        @JavascriptInterface
+        public boolean reminderCapable() { return true; }
+
+        @JavascriptInterface
+        public void requestReminderPermission() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() { askNotifPermission(); }
+            });
+        }
+
+        @JavascriptInterface
+        public String reminderPermission() { return notificationsAllowed() ? "granted" : "denied"; }
+
+        @JavascriptInterface
+        public void testReminder() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() { Reminders.showNotification(MainActivity.this, 999, "Sinov eslatmasi", "Dori vaqtida telefon shunday bildiradi"); }
+            });
         }
     }
 }

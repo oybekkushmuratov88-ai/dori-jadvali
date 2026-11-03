@@ -17,8 +17,8 @@ OUT="$HERE/.build"
 MAVEN="${MAVEN:-https://maven-central.storage-download.googleapis.com/maven2}"
 KEYSTORE="${KEYSTORE:-$HERE/.keystore/dori.p12}"
 : "${KEYSTORE_PASS:?set KEYSTORE_PASS to the signing key password}"
-VERSION_CODE="${VERSION_CODE:-1}"
-VERSION_NAME="${VERSION_NAME:-2.2}"
+VERSION_CODE="${VERSION_CODE:-2}"
+VERSION_NAME="${VERSION_NAME:-2.7}"
 
 fetch() { [ -s "$2" ] || { echo "download $1"; curl -fsSL -o "$2" "$MAVEN/$1"; }; }
 mkdir -p "$TOOLS"

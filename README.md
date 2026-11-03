@@ -7,7 +7,7 @@ iPhone (Safari) va Android (Chrome) brauzerida ochilib, "Uy ekraniga qo'shish" o
 
 - **Bugun**: kunlik qabullar ro'yxati, "Ichdim / Ichmadim" tugmalari, navbatdagi va vaqti o'tgan dorilar, davolash kunlari jadvali.
 - **Tarix**: belgilangan har bir qabul (qachon belgilangani bilan), dori va holat bo'yicha saralash, Excel (CSV) faylga saqlash.
-- **Eslatmalar** (Sozlamalar): dori vaqtida telefon bildirishnomasi (ilova ochiq/fonda turganda) va telefon kalendariga qo'shiladigan `.ics` fayl (ilova yopiq bo'lsa ham ishlaydi).
+- **Eslatmalar** (Sozlamalar): dori vaqtida telefon bildirishnomasi. Android ilovasida (APK) native AlarmManager orqali ilova butunlay yopiq bo'lsa ham aniq vaqtda eslatadi; web/PWA'da ilova ochiq yoki fonda turganda eslatadi. Qolgan holatlar uchun telefon kalendariga qo'shiladigan `.ics` fayl ham bor (ilova yopiq bo'lsa ham ishlaydi).
 - **Dorilar**: dori qo'shish va tahrirlash (nomi, dozasi, rasmi, ichish vaqtlari, boshlanish/tugash sanasi).
   Tugash sanasi o'tgan dori jadvaldan o'zi chiqib, "Arxiv dorilar"ga o'tadi.
 - **Sozlamalar**: shaxsiy hisob (ro'yxatdan o'tish, kirish, parolni tiklash), umumiy davolash muddati, zaxira nusxa saqlash va tiklash.

@@ -552,7 +552,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     </section>
 
     <p class="warn-box">Dori qabul qilishda shifokor ko‘rsatmasi va retseptdagi ko‘rsatmalar ustuvor.</p>
-    <p class="ver">Dori jadvali · versiya 2.6</p>
+    <p class="ver">Dori jadvali · versiya 2.7</p>
   </main>
 </div>
 
@@ -1216,7 +1216,12 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 
   function notifSupported(){ return typeof window.Notification !== "undefined" && "requestPermission" in window.Notification; }
   function notifPerm(){ return notifSupported() ? Notification.permission : "unsupported"; }
-  function notifReady(){ return notifOn && notifSupported() && Notification.permission === "granted"; }
+  function nativeRem(){ return !!(window.DoriAndroid && typeof window.DoriAndroid.setReminders === "function"); }
+  function nativePermGranted(){ try { return !window.DoriAndroid.reminderPermission || window.DoriAndroid.reminderPermission() === "granted"; } catch (e) { return true; } }
+  function notifReady(){ return nativeRem() ? (notifOn && nativePermGranted()) : (notifOn && notifSupported() && Notification.permission === "granted"); }
+  function notifConfigurable(){ return nativeRem() || notifSupported(); }
+  function doseEpoch(iso, time){ return new Date(+iso.slice(0,4), +iso.slice(5,7) - 1, +iso.slice(8,10), +time.slice(0,2), +time.slice(3,5), 0, 0).getTime(); }
+  function hashId(str){ var h = 0; for (var i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; } return Math.abs(h) % 100000 + 1; }
 
   function loadNotif(){
     try { notifOn = !!JSON.parse(localStorage.getItem(NOTIF_KEY) || "{}").on; } catch (e) { notifOn = false; }
@@ -1247,7 +1252,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 
   function fireDueReminders(){
     rollFired();
-    if (!notifReady()) return;
+    if (nativeRem() || !notifReady()) return;
     var today = todayISO(), nm = nowMin(), changed = false;
     dosesOn(today).forEach(function(d){
       if (state.marks[d.key] || notifFired[d.key]) return;
@@ -1258,7 +1263,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   }
   function armReminderTimers(){
     notifTimers.forEach(clearTimeout); notifTimers = [];
-    if (!notifReady()) return;
+    if (nativeRem() || !notifReady()) return;
     var today = todayISO(), now = new Date(), nowMs = now.getTime();
     dosesOn(today).forEach(function(d){
       if (state.marks[d.key] || notifFired[d.key]) return;
@@ -1272,9 +1277,42 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
       }, ms));
     });
   }
-  function syncReminders(){ fireDueReminders(); armReminderTimers(); }
+  var lastNativeSig = "";
+  function pushNativeSchedule(){
+    if (!nativeRem() || !notifOn) return;
+    var t = todayISO(), now = Date.now(), items = [];
+    for (var off = 0; off <= 13; off++) {
+      var iso = addDays(t, off);
+      dosesOn(iso).forEach(function(d){
+        if (state.marks[d.key]) return;
+        var at = doseEpoch(iso, d.time);
+        if (at <= now + 1000) return;
+        var m = d.med, body = m.name + (m.strength ? " " + m.strength : "");
+        var extra = joinDot(m.qty, m.how); if (extra) body += " · " + extra;
+        items.push({at: at, title: "Dori vaqti — " + d.time, body: body, nid: hashId(d.key)});
+      });
+    }
+    items.sort(function(a, b){ return a.at - b.at; });
+    if (items.length > 120) items = items.slice(0, 120);
+    var sig = notifOn + "|" + items.map(function(x){ return x.at + ":" + x.nid; }).join(",");
+    if (sig === lastNativeSig) return;
+    lastNativeSig = sig;
+    try { window.DoriAndroid.setReminders(JSON.stringify(items)); } catch (e) {}
+  }
+  function syncReminders(){
+    if (nativeRem()) { pushNativeSchedule(); return; }
+    fireDueReminders(); armReminderTimers();
+  }
+  // Native (Android app) tells us the notification-permission result.
+  window.__onReminderState = function(state){ lastNativeSig = ""; pushNativeSchedule(); if (ui.tab === "settings") renderNotif(); if (state === "denied") toast("Bildirishnomaga ruxsat berilmadi"); };
 
   function enableNotif(){
+    if (nativeRem()) {
+      notifOn = true; saveNotifOn(); lastNativeSig = "";
+      try { window.DoriAndroid.requestReminderPermission(); } catch (e) {}
+      pushNativeSchedule(); renderNotif(); toast("Eslatma yoqildi");
+      return;
+    }
     if (!notifSupported()) { renderNotif(); return; }
     function done(perm){
       if (perm === "granted") { notifOn = true; saveNotifOn(); syncReminders(); toast("Eslatma yoqildi"); }
@@ -1285,22 +1323,37 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     try { req = Notification.requestPermission(done); } catch (e) { req = null; }   // older callback API
     if (req && typeof req.then === "function") req.then(done, function(){ renderNotif(); });
   }
-  function disableNotif(){ notifOn = false; saveNotifOn(); notifTimers.forEach(clearTimeout); notifTimers = []; renderNotif(); toast("Eslatma o‘chirildi"); }
+  function disableNotif(){
+    notifOn = false; saveNotifOn(); notifTimers.forEach(clearTimeout); notifTimers = []; lastNativeSig = "";
+    if (nativeRem()) { try { window.DoriAndroid.setReminders("[]"); } catch (e) {} }
+    renderNotif(); toast("Eslatma o‘chirildi");
+  }
   function toggleNotif(){ if (notifReady()) disableNotif(); else enableNotif(); }
-  function testNotif(){ if (notifReady()) doseNotif({time: "", key: "test" + Date.now(), med: {name: "Sinov eslatmasi", strength: "", qty: "Dori vaqtida shunday bildiradi", how: ""}}); }
+  function testNotif(){
+    if (!notifReady()) return;
+    if (nativeRem()) { try { if (window.DoriAndroid.testReminder) window.DoriAndroid.testReminder(); } catch (e) {} return; }
+    doseNotif({time: "", key: "test" + Date.now(), med: {name: "Sinov eslatmasi", strength: "", qty: "Dori vaqtida shunday bildiradi", how: ""}});
+  }
 
   function renderNotif(){
-    var sw = $("remSwitch"), on = notifReady(), perm = notifPerm();
+    var sw = $("remSwitch"), on = notifReady();
     sw.setAttribute("aria-checked", on ? "true" : "false");
     sw.classList.toggle("on", on);
-    sw.disabled = !notifSupported();
+    sw.disabled = !notifConfigurable();
     var status;
-    if (!notifSupported()) status = window.DoriAndroid
-      ? "Bu ko‘rinishda eslatma ishlamaydi. Saytni Chrome’da ochib “Install app” qiling, yoki pastdagi kalendar yo‘lidan foydalaning."
-      : "Bu brauzerda eslatma ishlamaydi. Ilovani uy ekraniga o‘rnating (iPhone’da Safari, Androidda Chrome), yoki kalendar yo‘lidan foydalaning.";
-    else if (perm === "denied") status = "Eslatmaga ruxsat berilmagan. Telefon sozlamalaridan shu ilovaga bildirishnoma ruxsatini yoqing.";
-    else if (on) status = "Yoqilgan. Ilova ochiq yoki fonda turganda dori vaqtida eslatadi. Telefon butunlay yopilsa eslatma kelmasligi mumkin — ishonchli bo‘lishi uchun pastdagi kalendarga ham qo‘shing.";
-    else status = "O‘chirilgan. Yoqish uchun tugmani bosing.";
+    if (nativeRem()) {
+      if (on) status = "Yoqilgan. Dori vaqtida telefon eslatadi — ilova yopiq bo‘lsa ham.";
+      else if (notifOn && !nativePermGranted()) status = "Bildirishnomaga ruxsat kerak. Telefon sozlamalari → Ilovalar → Dori jadvali → Bildirishnomalar’ni yoqing.";
+      else status = "O‘chirilgan. Yoqish uchun tugmani bosing.";
+    } else if (!notifSupported()) {
+      status = "Bu brauzerda eslatma ishlamaydi. Ilovani uy ekraniga o‘rnating (iPhone’da Safari, Androidda Chrome), yoki pastdagi kalendar yo‘lidan foydalaning.";
+    } else if (notifPerm() === "denied") {
+      status = "Eslatmaga ruxsat berilmagan. Telefon sozlamalaridan shu ilovaga bildirishnoma ruxsatini yoqing.";
+    } else if (on) {
+      status = "Yoqilgan. Ilova ochiq yoki fonda turganda dori vaqtida eslatadi. Telefon butunlay yopilsa eslatma kelmasligi mumkin — ishonchli bo‘lishi uchun pastdagi kalendarga ham qo‘shing.";
+    } else {
+      status = "O‘chirilgan. Yoqish uchun tugmani bosing.";
+    }
     $("remStatus").textContent = status;
     $("remTest").hidden = !on;
   }
