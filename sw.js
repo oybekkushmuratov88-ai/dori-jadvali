@@ -1,6 +1,6 @@
 // Offline support: the app shell is cached on install. Pages are fetched
 // network-first (so updates arrive when online) and fall back to the cache.
-var CACHE = "dori-jadvali-v2.3.0";
+var CACHE = "dori-jadvali-v2.4.0";
 var SHELL = [
   "./",
   "./index.html",
@@ -72,6 +72,21 @@ self.addEventListener("fetch", function (event) {
         }
         return res;
       });
+    })
+  );
+});
+
+// Tapping a dose reminder focuses the open app, or opens it on the Today screen.
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+  var url = (event.notification.data && event.notification.data.url) || "./";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        var c = list[i];
+        if (c.url && c.url.indexOf(self.registration.scope) === 0 && "focus" in c) return c.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
     })
   );
 });

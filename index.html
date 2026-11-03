@@ -247,6 +247,16 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 .steps{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;font-size:.93rem}
 .ver{font-size:.8rem;color:var(--muted);text-align:center}
 
+.switch-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.switch-row .lbl{font-weight:600;font-size:.95rem}
+.switch-row .hint{margin-top:2px}
+.switch{flex:none;width:52px;height:32px;border-radius:99px;border:0;background:var(--line);position:relative;cursor:pointer;transition:background-color .2s ease;padding:0}
+.switch .knob{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s ease}
+.switch.on{background:var(--ok)}
+.switch.on .knob{transform:translateX(20px)}
+.switch:disabled{opacity:.5;cursor:default}
+.rule{border:0;border-top:1px solid var(--line);margin:2px 0}
+
 /* Bottom tab bar */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
 .tabbar-in{max-width:36rem;margin-inline:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -485,6 +495,25 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
       </div>
     </section>
 
+    <section class="panel" aria-labelledby="remH" id="remPanel">
+      <h2 id="remH">Eslatmalar</h2>
+      <div class="switch-row">
+        <div>
+          <div class="lbl">Dori vaqtida eslatma</div>
+          <p class="hint">Dori vaqti kelganda telefon ovoz chiqarib bildiradi.</p>
+        </div>
+        <button class="switch" type="button" id="remSwitch" role="switch" aria-checked="false" data-notif-toggle aria-label="Eslatmani yoqish yoki o‘chirish"><span class="knob" aria-hidden="true"></span></button>
+      </div>
+      <p class="hint" id="remStatus"></p>
+      <button class="btn" type="button" id="remTest" hidden>Sinov eslatmasi</button>
+      <hr class="rule">
+      <p class="hint">Ilova butunlay yopiq turganda ham eslatma kelishi uchun, dori vaqtlarini telefon kalendariga qo‘shing. Kalendar har kuni o‘z vaqtida bildiradi.</p>
+      <button class="btn" type="button" id="remIcs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+        Telefon kalendariga qo‘shish
+      </button>
+    </section>
+
     <section class="panel" aria-labelledby="courseH">
       <h2 id="courseH">Umumiy davolash muddati</h2>
       <div class="row2">
@@ -525,7 +554,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     </section>
 
     <p class="warn-box">Dori qabul qilishda shifokor ko‘rsatmasi va retseptdagi ko‘rsatmalar ustuvor.</p>
-    <p class="ver">Dori jadvali · versiya 2.3</p>
+    <p class="ver">Dori jadvali · versiya 2.4</p>
   </main>
 </div>
 
@@ -1010,6 +1039,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     else if (ui.tab === "meds") renderMeds();
     else renderSettings();
     if (!$("daySheet").hidden) renderDaySheet();
+    syncReminders();
     if (focusKey) {
       var el = document.querySelector('[data-fk="' + focusKey + '"]');
       if (el) el.focus({preventScroll: true});
@@ -1169,6 +1199,138 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     $("blister").innerHTML = html;
   }
 
+  // ================= Reminders (per-device: in-app notification + calendar file) =================
+  // Notifications are a per-device setting (kept in localStorage, not in the account), because
+  // permission and delivery belong to this phone. They fire while the app is open or alive in the
+  // background; for closed-app reminders the calendar file (.ics) is the reliable path.
+  var NOTIF_KEY = "dori.notif", FIRED_KEY = "dori.notified", REMIND_WINDOW_MIN = 180;
+  var notifOn = false, notifTimers = [], notifFiredDate = "", notifFired = {};
+
+  function notifSupported(){ return typeof window.Notification !== "undefined" && "requestPermission" in window.Notification; }
+  function notifPerm(){ return notifSupported() ? Notification.permission : "unsupported"; }
+  function notifReady(){ return notifOn && notifSupported() && Notification.permission === "granted"; }
+
+  function loadNotif(){
+    try { notifOn = !!JSON.parse(localStorage.getItem(NOTIF_KEY) || "{}").on; } catch (e) { notifOn = false; }
+    try {
+      var f = JSON.parse(localStorage.getItem(FIRED_KEY) || "{}");
+      if (f && f.date === todayISO()) { notifFiredDate = f.date; notifFired = f.keys || {}; }
+      else { notifFiredDate = todayISO(); notifFired = {}; }
+    } catch (e) { notifFiredDate = todayISO(); notifFired = {}; }
+  }
+  function saveNotifOn(){ try { localStorage.setItem(NOTIF_KEY, JSON.stringify({on: notifOn})); } catch (e) {} }
+  function saveFired(){ try { localStorage.setItem(FIRED_KEY, JSON.stringify({date: notifFiredDate, keys: notifFired})); } catch (e) {} }
+  function rollFired(){ var t = todayISO(); if (t !== notifFiredDate) { notifFiredDate = t; notifFired = {}; saveFired(); } }
+
+  function plainNotif(title, opts){ try { new Notification(title, opts); } catch (e) {} }
+  function doseNotif(d){
+    var m = d.med;
+    var title = d.time ? "Dori vaqti — " + d.time : "Dori eslatmasi";
+    var body = m.name + (m.strength ? " " + m.strength : "");
+    var extra = joinDot(m.qty, m.how);
+    if (extra) body += " · " + extra;
+    var opts = {body: body, tag: "dose:" + d.key, renotify: true, icon: "icons/icon-192.png", badge: "icons/favicon-32.png", lang: "uz", data: {url: "./", key: d.key}};
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.ready && typeof navigator.serviceWorker.ready.then === "function") {
+        navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(title, opts); }).catch(function(){ plainNotif(title, opts); });
+      } else plainNotif(title, opts);
+    } catch (e) { plainNotif(title, opts); }
+  }
+
+  function fireDueReminders(){
+    rollFired();
+    if (!notifReady()) return;
+    var today = todayISO(), nm = nowMin(), changed = false;
+    dosesOn(today).forEach(function(d){
+      if (state.marks[d.key] || notifFired[d.key]) return;
+      var dmin = toMin(d.time);
+      if (nm >= dmin && nm - dmin <= REMIND_WINDOW_MIN) { doseNotif(d); notifFired[d.key] = 1; changed = true; }
+    });
+    if (changed) saveFired();
+  }
+  function armReminderTimers(){
+    notifTimers.forEach(clearTimeout); notifTimers = [];
+    if (!notifReady()) return;
+    var today = todayISO(), now = new Date(), nowMs = now.getTime();
+    dosesOn(today).forEach(function(d){
+      if (state.marks[d.key] || notifFired[d.key]) return;
+      var dmin = toMin(d.time), at = new Date(now);
+      at.setHours(Math.floor(dmin / 60), dmin % 60, 0, 0);
+      var ms = at.getTime() - nowMs;
+      if (ms <= 0 || ms > 6 * 3600 * 1000) return;   // past: catch-up handles it; far-off: re-armed later
+      notifTimers.push(setTimeout(function(){
+        rollFired();
+        if (notifReady() && !state.marks[d.key] && !notifFired[d.key]) { doseNotif(d); notifFired[d.key] = 1; saveFired(); }
+      }, ms));
+    });
+  }
+  function syncReminders(){ fireDueReminders(); armReminderTimers(); }
+
+  function enableNotif(){
+    if (!notifSupported()) { renderNotif(); return; }
+    function done(perm){
+      if (perm === "granted") { notifOn = true; saveNotifOn(); syncReminders(); toast("Eslatma yoqildi"); }
+      else if (perm === "denied") toast("Ruxsat berilmadi");
+      renderNotif();
+    }
+    var req;
+    try { req = Notification.requestPermission(done); } catch (e) { req = null; }   // older callback API
+    if (req && typeof req.then === "function") req.then(done, function(){ renderNotif(); });
+  }
+  function disableNotif(){ notifOn = false; saveNotifOn(); notifTimers.forEach(clearTimeout); notifTimers = []; renderNotif(); toast("Eslatma o‘chirildi"); }
+  function toggleNotif(){ if (notifReady()) disableNotif(); else enableNotif(); }
+  function testNotif(){ if (notifReady()) doseNotif({time: "", key: "test" + Date.now(), med: {name: "Sinov eslatmasi", strength: "", qty: "Dori vaqtida shunday bildiradi", how: ""}}); }
+
+  function renderNotif(){
+    var sw = $("remSwitch"), on = notifReady(), perm = notifPerm();
+    sw.setAttribute("aria-checked", on ? "true" : "false");
+    sw.classList.toggle("on", on);
+    sw.disabled = !notifSupported();
+    var status;
+    if (!notifSupported()) status = window.DoriAndroid
+      ? "Bu ko‘rinishda eslatma ishlamaydi. Saytni Chrome’da ochib “Install app” qiling, yoki pastdagi kalendar yo‘lidan foydalaning."
+      : "Bu brauzerda eslatma ishlamaydi. Ilovani uy ekraniga o‘rnating (iPhone’da Safari, Androidda Chrome), yoki kalendar yo‘lidan foydalaning.";
+    else if (perm === "denied") status = "Eslatmaga ruxsat berilmagan. Telefon sozlamalaridan shu ilovaga bildirishnoma ruxsatini yoqing.";
+    else if (on) status = "Yoqilgan. Ilova ochiq yoki fonda turganda dori vaqtida eslatadi. Telefon butunlay yopilsa eslatma kelmasligi mumkin — ishonchli bo‘lishi uchun pastdagi kalendarga ham qo‘shing.";
+    else status = "O‘chirilgan. Yoqish uchun tugmani bosing.";
+    $("remStatus").textContent = status;
+    $("remTest").hidden = !on;
+  }
+
+  // ---- calendar file: one daily recurring alarm per dose time, until each medicine ends ----
+  function icsEsc(t){ return String(t == null ? "" : t).replace(/[\\;,]/g, "\\$&").replace(/\r?\n/g, "\\n"); }
+  function icsFloating(iso, time){ return iso.replace(/-/g, "") + "T" + time.replace(":", "") + "00"; }
+  function icsStampUTC(){ var d = new Date(); function z(n){ return (n < 10 ? "0" : "") + n; }
+    return d.getUTCFullYear() + z(d.getUTCMonth() + 1) + z(d.getUTCDate()) + "T" + z(d.getUTCHours()) + z(d.getUTCMinutes()) + z(d.getUTCSeconds()) + "Z"; }
+  function activeMeds(){ return state.meds.filter(function(m){ return medStatus(m) !== "archived"; }); }
+  function buildICS(){
+    var stamp = icsStampUTC();
+    var out = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Dori jadvali//uz//", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+    activeMeds().forEach(function(m){
+      var until = effEnd(m).replace(/-/g, "") + "T235959";
+      var title = icsEsc(m.name + (m.strength ? " " + m.strength : ""));
+      var desc = icsEsc(joinDot(m.qty, m.how) || "Dori qabul qilish");
+      m.times.forEach(function(t){
+        out.push("BEGIN:VEVENT",
+          "UID:dori-" + m.id + "-" + t.replace(":", "") + "@dori-jadvali",
+          "DTSTAMP:" + stamp,
+          "DTSTART:" + icsFloating(m.start, t),
+          "DURATION:PT10M",
+          "RRULE:FREQ=DAILY;UNTIL=" + until,
+          "SUMMARY:" + title,
+          "DESCRIPTION:" + desc,
+          "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + title, "TRIGGER:PT0M", "END:VALARM",
+          "END:VEVENT");
+      });
+    });
+    out.push("END:VCALENDAR");
+    return out.join("\r\n");
+  }
+  function exportICS(){
+    if (!activeMeds().length) { toast("Faol dori yo‘q"); return; }
+    offerFile("dori-eslatmalar.ics", "text/calendar", buildICS()).then(function(ok){ if (ok) toast("Kalendar fayli tayyor"); });
+  }
+
   // ================= Install =================
   var deferredPrompt = null;
   function isStandalone(){ return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true || !!window.DoriAndroid; }
@@ -1291,6 +1453,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     if ($("courseEnd").value !== c.end) $("courseEnd").value = c.end;
     $("courseInfo").textContent = "Jami " + (diffDays(c.start, c.end) + 1) + " kun: " + rangeText(c.start, c.end) + ".";
     var sa = isStandalone();
+    renderNotif();
     $("installBtn").hidden = sa || !deferredPrompt;
     $("installedNote").hidden = !sa;
     $("apkHint").hidden = sa || isIOS();
@@ -2136,6 +2299,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     if ((el = t.closest("[data-auth-mode]"))) { setAuthMode(el.getAttribute("data-auth-mode")); return; }
     if ((el = t.closest("[data-auth]"))) { openAuth(el.getAttribute("data-auth")); return; }
     if ((el = t.closest("[data-tab]"))) { switchTab(el.getAttribute("data-tab")); return; }
+    if ((el = t.closest("[data-notif-toggle]"))) { toggleNotif(); return; }
     if ((el = t.closest("[data-undo]"))) { undoMark(); return; }
     if ((el = t.closest("[data-mark]"))) { if (!el.disabled) markWithEffect(el); return; }
     if ((el = t.closest("[data-zoom]"))) { zoom(photoURLs[el.getAttribute("data-zoom")]); return; }
@@ -2164,6 +2328,8 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     }
   });
 
+  $("remTest").addEventListener("click", testNotif);
+  $("remIcs").addEventListener("click", exportICS);
   $("dayDoneBtn").addEventListener("click", function(){ openDay(todayISO()); });
   $("dsClose").addEventListener("click", function(){ closeDay(false); });
   $("daySheet").addEventListener("click", function(e){ if (e.target === $("daySheet")) closeDay(false); });
@@ -2226,6 +2392,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     var t = todayISO();
     if (t !== lastToday) lastToday = t;
     if ($("sheet").hidden) render();
+    else syncReminders();
   }
   setInterval(tick, 30000);
   document.addEventListener("visibilitychange", function(){ if (!document.hidden) tick(); });
@@ -2238,6 +2405,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   });
 
   // ================= Boot =================
+  loadNotif();
   render();
   openDB().then(function(db){ idb = db; return ensurePhotos(); }).then(render);
   initCloud();
