@@ -552,7 +552,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     </section>
 
     <p class="warn-box">Dori qabul qilishda shifokor ko‘rsatmasi va retseptdagi ko‘rsatmalar ustuvor.</p>
-    <p class="ver">Dori jadvali · versiya 2.7</p>
+    <p class="ver">Dori jadvali · versiya 2.8</p>
   </main>
 </div>
 
@@ -1361,12 +1361,17 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   // ---- calendar file: one daily recurring alarm per dose time, until each medicine ends ----
   function icsEsc(t){ return String(t == null ? "" : t).replace(/[\\;,]/g, "\\$&").replace(/\r?\n/g, "\\n"); }
   function icsFloating(iso, time){ return iso.replace(/-/g, "") + "T" + time.replace(":", "") + "00"; }
+  function icsLocal(iso, time, addMin){
+    var d = new Date(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10), +time.slice(0, 2), +time.slice(3, 5) + (addMin || 0), 0, 0);
+    function z(n){ return (n < 10 ? "0" : "") + n; }
+    return d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + "T" + z(d.getHours()) + z(d.getMinutes()) + "00";
+  }
   function icsStampUTC(){ var d = new Date(); function z(n){ return (n < 10 ? "0" : "") + n; }
     return d.getUTCFullYear() + z(d.getUTCMonth() + 1) + z(d.getUTCDate()) + "T" + z(d.getUTCHours()) + z(d.getUTCMinutes()) + z(d.getUTCSeconds()) + "Z"; }
   function activeMeds(){ return state.meds.filter(function(m){ return medStatus(m) !== "archived"; }); }
   function buildICS(){
     var stamp = icsStampUTC();
-    var out = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Dori jadvali//uz//", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+    var out = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Dori jadvali//uz//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Dori eslatmalari"];
     activeMeds().forEach(function(m){
       var until = effEnd(m).replace(/-/g, "") + "T235959";
       var title = icsEsc(m.name + (m.strength ? " " + m.strength : ""));
@@ -1375,17 +1380,18 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
         out.push("BEGIN:VEVENT",
           "UID:dori-" + m.id + "-" + t.replace(":", "") + "@dori-jadvali",
           "DTSTAMP:" + stamp,
-          "DTSTART:" + icsFloating(m.start, t),
-          "DURATION:PT10M",
+          "DTSTART:" + icsLocal(m.start, t, 0),
+          "DTEND:" + icsLocal(m.start, t, 10),
           "RRULE:FREQ=DAILY;UNTIL=" + until,
           "SUMMARY:" + title,
           "DESCRIPTION:" + desc,
-          "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + title, "TRIGGER:PT0M", "END:VALARM",
+          "SEQUENCE:0", "STATUS:CONFIRMED", "TRANSP:OPAQUE",
+          "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + title, "TRIGGER:-PT0M", "END:VALARM",
           "END:VEVENT");
       });
     });
     out.push("END:VCALENDAR");
-    return out.join("\r\n");
+    return out.join("\r\n") + "\r\n";
   }
   function exportICS(){
     if (!activeMeds().length) { toast("Faol dori yo‘q"); return; }
