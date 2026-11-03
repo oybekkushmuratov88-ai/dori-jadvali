@@ -515,14 +515,9 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     </section>
 
     <section class="panel" aria-labelledby="courseH">
-      <h2 id="courseH">Umumiy davolash muddati</h2>
-      <div class="row2">
-        <div class="field"><label for="courseStart">Boshlanish sanasi</label><input class="input" type="date" id="courseStart"></div>
-        <div class="field"><label for="courseEnd">Tugash sanasi</label><input class="input" type="date" id="courseEnd"></div>
-      </div>
+      <h2 id="courseH">Davolash muddati</h2>
       <p class="hint" id="courseInfo"></p>
-      <p class="form-err" id="courseErr" hidden></p>
-      <p class="hint">Har bir dorining o‘z boshlanish va tugash sanasi “Dorilar” bo‘limida alohida kiritiladi.</p>
+      <p class="hint">Jadval dorilaringiz bo‘yicha avtomatik tuziladi va vaqt o‘tgani sayin oldinga suriladi. Har bir dorining boshlanish va tugash sanasini “Dorilar” bo‘limida o‘zgartirasiz; muddati tugagan dori jadvaldan chiqib, arxivga o‘tadi.</p>
     </section>
 
     <section class="panel" aria-labelledby="backupH">
@@ -554,7 +549,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     </section>
 
     <p class="warn-box">Dori qabul qilishda shifokor ko‘rsatmasi va retseptdagi ko‘rsatmalar ustuvor.</p>
-    <p class="ver">Dori jadvali · versiya 2.4</p>
+    <p class="ver">Dori jadvali · versiya 2.5</p>
   </main>
 </div>
 
@@ -986,10 +981,24 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     return "soon";
   }
   function isDue(iso, time, today, nm){ return iso < today || (iso === today && nm >= toMin(time)); }
+  // The treatment window shown everywhere: derived from the medicines in the plan now
+  // (not a fixed course), so it rolls forward and always includes today. Archived meds drop off.
+  function planRange(){
+    var t = todayISO();
+    var meds = state.meds.filter(function(m){ return medStatus(m) !== "archived"; });
+    if (!meds.length) {
+      var c = state.course;
+      if (isISO(c.start) && isISO(c.end) && c.end >= c.start) return {start: c.start, end: c.end};
+      return {start: addDays(t, -6), end: t};
+    }
+    var s = t, e = t;
+    meds.forEach(function(m){ if (m.start < s) s = m.start; var ee = effEnd(m); if (ee > e) e = ee; });
+    return {start: s, end: e};
+  }
   function courseStats(){
-    var c = state.course, t = todayISO(), nm = nowMin();
+    var pr = planRange(), t = todayISO(), nm = nowMin();
     var r = {planned: 0, taken: 0, missed: 0, due: 0, takenDue: 0, overdue: 0};
-    for (var iso = c.start; iso <= c.end; iso = addDays(iso, 1)) {
+    for (var iso = pr.start; iso <= pr.end; iso = addDays(iso, 1)) {
       dosesOn(iso).forEach(function(d){
         r.planned++;
         var m = state.marks[d.key];
@@ -1048,13 +1057,9 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 
   // ================= Rendering: Bugun =================
   function renderToday(){
-    var today = todayISO(), c = state.course;
-    var cLen = diffDays(c.start, c.end) + 1, cDay = diffDays(c.start, today) + 1;
-    var line = "Davolash: " + rangeText(c.start, c.end);
-    if (cDay < 1) line += " · " + (1 - cDay) + " kundan keyin boshlanadi";
-    else if (cDay > cLen) line += " · yakunlandi";
-    else line += " · " + cDay + "-kun / " + cLen;
-    $("courseLine").textContent = line;
+    var today = todayISO(), pr = planRange();
+    var cLen = diffDays(pr.start, pr.end) + 1, cDay = diffDays(pr.start, today) + 1;
+    $("courseLine").textContent = "Davolash: " + rangeText(pr.start, pr.end) + " · " + cDay + "-kun / " + cLen;
 
     var st = courseStats();
     var denom = st.planned || 1;
@@ -1070,7 +1075,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 
     // Today only: marked doses leave this list for the history; past days are closed.
     var iso = today;
-    var inCourse = iso >= c.start && iso <= c.end;
+    var inCourse = iso >= pr.start && iso <= pr.end;
     $("dayTitle").textContent = inCourse ? cDay + "-kun" : dm(iso);
     $("dayDate").textContent = inCourse ? longDate(iso) : WEEKDAYS[weekday(iso)];
 
@@ -1159,7 +1164,7 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
       var e = effEnd(m);
       if (e === iso && e >= m.start) notes.push("<span>" + esc(m.name) + " — bugun oxirgi kun.</span>");
       if (addDays(e, 1) === iso && e >= m.start) notes.push("<span>" + esc(m.name) + " kursi tugadi va arxivga o‘tdi.</span>");
-      if (m.start === iso && m.start !== c.start) notes.push("<span>" + esc(m.name) + " bugundan boshlanadi.</span>");
+      if (m.start === iso && m.start !== pr.start) notes.push("<span>" + esc(m.name) + " bugundan boshlanadi.</span>");
     });
     $("dayNote").hidden = notes.length === 0;
     $("dayNote").innerHTML = notes.join("");
@@ -1168,14 +1173,14 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   }
 
   function renderBlister(){
-    var c = state.course, t = todayISO(), nm = nowMin();
-    var len = Math.min(diffDays(c.start, c.end) + 1, 366);
-    var wd0 = weekday(c.start), head = "";
+    var pr = planRange(), t = todayISO(), nm = nowMin();
+    var len = Math.min(diffDays(pr.start, pr.end) + 1, 366);
+    var wd0 = weekday(pr.start), head = "";
     for (var w = 0; w < 7; w++) head += "<span>" + WD_SHORT[(wd0 + w) % 7] + "</span>";
     $("weekhead").innerHTML = head;
     var html = "";
     for (var k = 1; k <= len; k++) {
-      var iso = addDays(c.start, k - 1), doses = dosesOn(iso);
+      var iso = addDays(pr.start, k - 1), doses = dosesOn(iso);
       var taken = 0, missed = 0, late = 0, dots = "";
       doses.forEach(function(d, i){
         var m = state.marks[d.key], cl = "";
@@ -1448,10 +1453,11 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
 
   // ================= Rendering: Sozlamalar =================
   function renderSettings(){
-    var c = state.course;
-    if ($("courseStart").value !== c.start) $("courseStart").value = c.start;
-    if ($("courseEnd").value !== c.end) $("courseEnd").value = c.end;
-    $("courseInfo").textContent = "Jami " + (diffDays(c.start, c.end) + 1) + " kun: " + rangeText(c.start, c.end) + ".";
+    var pr = planRange();
+    var nActive = state.meds.filter(function(m){ return medStatus(m) !== "archived"; }).length;
+    $("courseInfo").textContent = nActive
+      ? "Hozirgi davolash: " + rangeText(pr.start, pr.end) + " · " + (diffDays(pr.start, pr.end) + 1) + " kun · " + nActive + " ta dori."
+      : "Hozir faol dori yo‘q. Dori qo‘shsangiz, jadval o‘zi tuziladi.";
     var sa = isStandalone();
     renderNotif();
     $("installBtn").hidden = sa || !deferredPrompt;
@@ -1525,9 +1531,9 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   function renderDaySheet(){
     var iso = ui.dayOpen;
     if (!iso) return;
-    var c = state.course, t = todayISO(), nm = nowMin();
-    var inCourse = iso >= c.start && iso <= c.end;
-    $("dsTitle").textContent = inCourse ? (diffDays(c.start, iso) + 1) + "-kun" : dm(iso);
+    var pr = planRange(), t = todayISO(), nm = nowMin();
+    var inCourse = iso >= pr.start && iso <= pr.end;
+    $("dsTitle").textContent = inCourse ? (diffDays(pr.start, iso) + 1) + "-kun" : dm(iso);
     $("dsDate").textContent = longDate(iso) + (iso === t ? " · bugun" : "");
     var rows = dosesOn(iso).map(function(d){
       return {time: d.time, key: d.key, src: d.med, name: d.med.name, strength: d.med.strength, mark: state.marks[d.key]};
@@ -1680,22 +1686,12 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
     });
   }
 
-  function setCourse(){
-    var s = $("courseStart").value, e = $("courseEnd").value, err = $("courseErr");
-    if (!isISO(s) || !isISO(e)) { err.textContent = "Ikkala sanani ham kiriting."; err.hidden = false; return; }
-    if (e < s) { err.textContent = "Tugash sanasi boshlanish sanasidan oldin bo‘lishi mumkin emas."; err.hidden = false; return; }
-    err.hidden = true;
-    if (s === state.course.start && e === state.course.end) return;
-    state.course = {start: s, end: e};
-    save(); cloudSaveUser(); render(); toast("Davolash muddati saqlandi");
-  }
-
   // ================= Medicine editor =================
   var draft = null;   // {id|null, form, color, times[], photoBlob, photoURL, removePhoto}
   function openEditor(med){
     var t = todayISO();
-    var c = state.course;
-    var defEnd = c.end >= t ? c.end : addDays(t, 6);
+    var pr = planRange();
+    var defEnd = pr.end >= t ? pr.end : addDays(t, 6);
     draft = {
       id: med ? med.id : null,
       form: med ? med.form : "tablet",
@@ -2340,8 +2336,6 @@ input[type="date"].input::-webkit-date-and-time-value,input[type="time"].input::
   $("histMore").addEventListener("click", function(){ ui.histDays += 30; render(); });
   $("histCsv").addEventListener("click", exportCSV);
 
-  $("courseStart").addEventListener("change", setCourse);
-  $("courseEnd").addEventListener("change", setCourse);
   $("exportBtn").addEventListener("click", exportBackup);
   $("importInput").addEventListener("change", function(e){ var f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) readImport(f); });
   $("importYes").addEventListener("click", applyImport);
